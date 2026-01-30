@@ -1,0 +1,18 @@
+repositories:
+  # VESC Motor Controller
+  src/drivers/vesc:
+    type: git
+    url: https://github.com/f1tenth/vesc.git
+    version: ros2
+
+  # SICK LIDAR
+  src/drivers/livox_driver:
+    type: git
+    url: https://github.com/SICKAG/sick_scan_xd.git
+    version: master
+    
+  # SICK LiDAR Fusion (The Logic Node)
+  src/fusion/sick_lidar_fusion:
+    type: git
+    url: https://github.com/Triton-AI/sick_lidar_fusion_project.git
+    version: main

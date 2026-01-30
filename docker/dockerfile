@@ -1,0 +1,48 @@
+# --------------------------------------------------------
+# TRITON RACER T7 - DOCKERFILE
+# Target: Raspberry Pi 5 (ARM64) | OS: ROS 2 Humble
+# --------------------------------------------------------
+    FROM ros:humble-ros-base
+
+    # 1. INSTALL SYSTEM TOOLS
+    # Added 'ros-humble-serial-driver' to fix the VESC build error
+    RUN apt-get update && apt-get install -y \
+        python3-pip \
+        ros-humble-cv-bridge \
+        ros-humble-vision-opencv \
+        ros-humble-depthai-ros \
+        ros-humble-joy \
+        ros-humble-teleop-twist-joy \
+        ros-humble-ackermann-msgs \
+        ros-humble-serial-driver \
+        libusb-1.0-0-dev \
+        git \
+        build-essential \
+        && rm -rf /var/lib/apt/lists/*
+    
+    # 2. INSTALL PYTHON AI LIBRARIES
+    RUN pip3 install \
+        numpy \
+        opencv-python \
+        scipy \
+        ultralytics
+    
+    # 3. SETUP WORKSPACE
+    WORKDIR /race_ws
+    COPY docker/racer.repos .
+    
+    # 4. DOWNLOAD DRIVERS
+    RUN mkdir src
+    RUN vcs import src < racer.repos
+    
+    # 5. BUILD THE SYSTEM
+    # We use '--parallel-workers 1' to prevent the "ResourceExhausted" memory crash
+    RUN . /opt/ros/humble/setup.sh && \
+        colcon build --symlink-install --parallel-workers 1
+    
+    # 6. SETUP ENTRYPOINT
+    COPY docker/entrypoint.sh /entrypoint.sh
+    RUN chmod +x /entrypoint.sh
+    
+    ENTRYPOINT ["/entrypoint.sh"]
+    CMD ["bash"]
