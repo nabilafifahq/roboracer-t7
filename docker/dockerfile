@@ -3,9 +3,9 @@
 # Target: Raspberry Pi 5 (ARM64) | OS: ROS 2 Humble
 # --------------------------------------------------------
     FROM ros:humble-ros-base
-
+    
     # 1. INSTALL SYSTEM TOOLS
-    # Added 'ros-humble-serial-driver' to fix the VESC build error
+    # Added 'asio-cmake-module' and 'io-context' to fix the dependency chain error
     RUN apt-get update && apt-get install -y \
         python3-pip \
         ros-humble-cv-bridge \
@@ -15,6 +15,8 @@
         ros-humble-teleop-twist-joy \
         ros-humble-ackermann-msgs \
         ros-humble-serial-driver \
+        ros-humble-asio-cmake-module \
+        ros-humble-io-context \
         libusb-1.0-0-dev \
         git \
         build-essential \
@@ -25,7 +27,9 @@
         numpy \
         opencv-python \
         scipy \
-        ultralytics
+        ultralytics \
+        depthai \
+        blobconverter
     
     # 3. SETUP WORKSPACE
     WORKDIR /race_ws
@@ -33,12 +37,12 @@
     
     # 4. DOWNLOAD DRIVERS
     RUN mkdir src
-    RUN vcs import src < racer.repos
-    
+    RUN vcs import . < racer.repos
+    COPY src ./src
+
     # 5. BUILD THE SYSTEM
-    # We use '--parallel-workers 1' to prevent the "ResourceExhausted" memory crash
     RUN . /opt/ros/humble/setup.sh && \
-        colcon build --symlink-install --parallel-workers 1
+    colcon build --symlink-install --parallel-workers 1
     
     # 6. SETUP ENTRYPOINT
     COPY docker/entrypoint.sh /entrypoint.sh
