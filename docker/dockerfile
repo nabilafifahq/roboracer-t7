@@ -8,6 +8,10 @@
     # Added 'asio-cmake-module' and 'io-context' to fix the dependency chain error
     RUN apt-get update && apt-get install -y \
         python3-pip \
+        python3-vcstool \
+        python3-colcon-common-extensions \
+        cmake \
+        libapr1-dev \
         ros-humble-cv-bridge \
         ros-humble-vision-opencv \
         ros-humble-depthai-ros \
@@ -30,7 +34,7 @@
         ultralytics \
         depthai \
         blobconverter
-    
+
     # 3. SETUP WORKSPACE
     WORKDIR /race_ws
     COPY docker/racer.repos .
@@ -41,11 +45,23 @@
 
     COPY src ./src
 
+    # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
     RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive
+
+    # 4b. Build & install Livox-SDK2 to /usr/local so livox_ros_driver2 can find:
+    # - /usr/local/lib/liblivox_lidar_sdk_shared.so
+    # - livox_lidar_api.h / livox_lidar_def.h in include path (typically /usr/local/include)
+    RUN cd /race_ws/livox_sdk2 && \
+        mkdir -p build && cd build && \
+        cmake .. -DCMAKE_BUILD_TYPE=Release && \
+        make -j$(nproc) && \
+        make install && \
+        ldconfig
 
     # 5. BUILD THE SYSTEM
     RUN . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install --parallel-workers 1
+        colcon build --symlink-install --parallel-workers 1 \
+          --cmake-args -DHUMBLE_ROS=humble
     
     # 6. SETUP ENTRYPOINT
     COPY docker/entrypoint.sh /entrypoint.sh
