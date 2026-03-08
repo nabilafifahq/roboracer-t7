@@ -1,5 +1,5 @@
 repositories:
-  # system (includes ackermann_mux, vesc, teleop_tools)
+  # Only f1tenth_system (includes ackermann_mux, vesc, teleop tools via submodules)
   src/f1tenth_system:
     type: git
     url: https://github.com/fish-mouse/f1tenth_system.git
