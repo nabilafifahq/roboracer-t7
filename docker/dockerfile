@@ -16,8 +16,6 @@
         ros-humble-cv-bridge \
         ros-humble-vision-opencv \
         ros-humble-depthai-ros \
-        ros-humble-joy \
-        ros-humble-teleop-twist-joy \
         ros-humble-ackermann-msgs \
         ros-humble-serial-driver \
         ros-humble-asio-cmake-module \
@@ -48,29 +46,6 @@
     # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
     RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive
 
-    # 4b. Build & install Livox-SDK2 to /usr/local so livox_ros_driver2 can find:
-    # - /usr/local/lib/liblivox_lidar_sdk_shared.so
-    # - livox_lidar_api.h / livox_lidar_def.h in include path (typically /usr/local/include)
-    RUN cd /race_ws/livox_sdk2 && \
-        mkdir -p build && cd build && \
-        cmake .. -DCMAKE_BUILD_TYPE=Release && \
-        make -j$(nproc) && \
-        make install && \
-        ldconfig
-
-    # 6. Ensure runtime can find Livox SDK2 shared libraries.
-    # livox_ros_driver2 README FAQ recommends adding /usr/local/lib to LD_LIBRARY_PATH.
-    ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
-
     # 5. BUILD THE SYSTEM
     RUN source /opt/ros/humble/setup.sh && \
-        colcon build --symlink-install --parallel-workers 1 \
-          --cmake-args -DHUMBLE_ROS=humble
-
-    
-    # 6. SETUP ENTRYPOINT
-    COPY docker/entrypoint.sh /entrypoint.sh
-    RUN chmod +x /entrypoint.sh
-    
-    ENTRYPOINT ["/entrypoint.sh"]
-    CMD ["bash"]
+        colcon build --sy
