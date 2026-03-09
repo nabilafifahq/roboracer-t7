@@ -1,52 +1,61 @@
-# --------------------------------------------------------
-# TRITON RACER T7 - DOCKERFILE
-# Target: Raspberry Pi 5 (ARM64) | OS: ROS 2 Humble
-# --------------------------------------------------------
-    FROM ros:humble-ros-base
-    
-    # 1. INSTALL SYSTEM TOOLS
-    # Added 'asio-cmake-module' and 'io-context' to fix the dependency chain error
-    RUN apt-get update && apt-get install -y \
-        python3-pip \
-        python3-vcstool \
-        python3-colcon-common-extensions \
-        cmake \
-        libapr1-dev \
-        libpcl-dev \
-        ros-humble-cv-bridge \
-        ros-humble-vision-opencv \
-        ros-humble-depthai-ros \
-        ros-humble-ackermann-msgs \
-        ros-humble-serial-driver \
-        ros-humble-asio-cmake-module \
-        ros-humble-io-context \
-        libusb-1.0-0-dev \
-        git \
-        build-essential \
-        && rm -rf /var/lib/apt/lists/*
-    
-    # 2. INSTALL PYTHON AI LIBRARIES
-    RUN pip3 install \
-        numpy \
-        opencv-python \
-        scipy \
-        ultralytics \
-        depthai \
-        blobconverter
+FROM ros:humble-ros-base
 
-    # 3. SETUP WORKSPACE
-    WORKDIR /race_ws
-    COPY docker/racer.repos .
-    
-    # 4. DOWNLOAD REPOS (copy local src first so vcs import does not get overwritten)
-    RUN mkdir -p src
-    COPY src ./src
-    RUN vcs import . < racer.repos
+# 1. INSTALL SYSTEM TOOLS
+RUN apt-get update && apt-get install -y \
+	python3-vcstool \
+	python3-colcon-common-extensions \
+	libpcl-dev \ 
+	ros-humble-cv-bridge \
+	ros-humble-vision-opencv \
+	ros-humble-depthai-ros \
+	ros-humble-joy \
+	ros-humble-teleop-twist-joy \
+	ros-humble-ackermann-msgs \
+	ros-humble-serial-driver \
+	ros-humble-asio-cmake-module \
+	ros-humble-rviz2 \
+	ros-humble-rviz-imu-plugin \
+	libusb-1.0-0-dev \
+	git \
+	build-essential \
+	&& rm -rf /var/lib/apt/lists/*	
+	
+# 2. Install python libraries (none for now)
 
-    # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
-    RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive
+# 3. SETUP WORKSPACE
+WORKDIR /race_ws
+COPY docker/racer.repos .
 
-    # 5. BUILD THE SYSTEM
-    RUN source /opt/ros/humble/setup.sh && \
-        colcon build --symlink-install --parallel-workers 1 \
-          --cmake-args -DHUMBLE_ROS=humble
+# 4. Download repos (copy local src first so vcs imports does not get overwritten)
+RUN mkdir -p src
+COPY src ./src
+RUN vcs import . < racer.repos
+
+# Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
+RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive
+
+# 4b. Build & install Livox-SDK2 to /usr/local so livox_ros_driver2 can find:
+# - /usr/local/lib/liblivox_lidar_sdk_shared.so
+# - livox_lidar_api.h / livox_lidar_def.h in include path (typically /usr/local/include)
+RUN cd /race_ws/livox_sdk2 && \
+	mkdir -p build && cd build && \
+	cmake .. -DCMAKE_BUILD_TYPE=Release && \
+	make -j$(nproc) && \
+	make install && \
+	ldconfig
+	
+# 6. Ensure runtime can find Livox SDK2 shared libraries.
+# livox_ros_driver2 README FAQ recommends adding /usr/local/lib to LD_LIBRARY_PATH.
+ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
+
+# 5. BUILD THE SYSTEM
+RUN source /opt/ros/humble/setup.sh && \
+	colcon build --symlink-install --parallel-workers 1 \
+	  --cmake-args -DHUMBLE_ROS=humble
+
+# 6. SETUP ENTRYPOINT
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
