@@ -137,6 +137,41 @@ Leave this running (it publishes image topics). If the launch file name differs 
 ls $(ros2 pkg prefix depthai_ros_driver)/share/depthai_ros_driver/launch/
 ```
 
+### 6.1 Finding your camera topic names and Fixed Frame (RViz)
+
+Topic names and the Fixed Frame depend on your camera model and driver config (e.g. OAK-D-PRO → `oak_d_pro`, OAK-D-Lite → `oak_d_lite`). Use these steps **with the camera driver running** (Section 6) in another terminal.
+
+**Step 1 — List all topics and their types**
+
+In a second terminal (attach to the container, then run):
+
+```bash
+source /opt/ros/humble/setup.bash
+source /race_ws/install/setup.bash
+ros2 topic list -t
+```
+
+- Lines like `/oak_d_pro/color/image_raw [sensor_msgs/msg/Image]` are your image topics. The prefix (e.g. `oak_d_pro`) is your **camera namespace**.
+- Use these **exact** names when recording specific topics (7.2) or adding displays in RViz (7.3).
+
+**Step 2 — Get the frame_id used in image messages (for RViz Fixed Frame)**
+
+Pick one image topic from Step 1 and run (replace with your topic name):
+
+```bash
+ros2 topic echo /oak_d_pro/color/image_raw --once
+```
+
+- In the printed message, find the **header** → **frame_id** (e.g. `oak_d_pro_link` or `oak_d_pro_camera_optical_frame`). Use that value as **Fixed Frame** in RViz if the image doesn’t show.
+
+**Reference (OAK-D-PRO, default driver)**  
+| What | Example (yours may differ) |
+|------|-----------------------------|
+| Image topics | `/oak_d_pro/color/image_raw`, `/oak_d_pro/left/image_raw`, `/oak_d_pro/right/image_raw` |
+| Fixed Frame | `oak_d_pro_link` |
+
+If your topics use a different prefix (e.g. `oak_d`), use that prefix in all commands and in RViz.
+
 ---
 
 ## 7. Record to rosbag and visualize in RViz
@@ -193,8 +228,13 @@ ros2 bag record -a -o /rosbags/cam_$(date +%Y%m%d_%H%M%S)
 ```
 Let it record, then press **Ctrl+C** to stop. The bag is in `/rosbags/` (and in `~/rosbags` on the host if you used the mount in 7.1).
 
-**Optional:** To record only specific image topics, in Terminal 2 replace the `ros2 bag record` line with (adjust topic names from `ros2 topic list`):
-`ros2 bag record -o /rosbags/cam_$(date +%Y%m%d_%H%M%S) /oak_d_pro/color/image_raw /oak_d_pro/left/image_raw /oak_d_pro/right/image_raw`
+**Optional:** To record only specific image topics, in Terminal 2 replace the `ros2 bag record` line with your **actual** topic names from **Section 6.1** (e.g. for OAK-D-PRO):
+
+```bash
+ros2 bag record -o /rosbags/cam_$(date +%Y%m%d_%H%M%S) /oak_d_pro/color/image_raw /oak_d_pro/left/image_raw /oak_d_pro/right/image_raw
+```
+
+If your camera uses a different namespace, use the names from `ros2 topic list -t`.
 
 ---
 
@@ -221,13 +261,12 @@ Leave this running while you view in RViz.
 # On the host, get into the container:
 docker exec -it equip-test-arm bash
 
-# Inside the container:
-apt-get update && apt-get install -y ros-humble-rviz2
+# Inside the container (RViz2 is already in the image):
 source /opt/ros/humble/setup.bash
 ros2 run rviz2 rviz2
 ```
 
-**In the RViz window:** Click **Add** → **By topic** → choose an image topic (e.g. `/oak_d_pro/color/image_raw`). If the image doesn’t show, set **Fixed Frame** (e.g. `oak_d_pro_link`). The view updates as the bag plays in Terminal 1.
+**In the RViz window:** Click **Add** → **By topic** → choose an image topic (use the names you found in **Section 6.1**; e.g. `/oak_d_pro/color/image_raw`). If the image doesn’t show, set **Fixed Frame** to the frame_id from Section 6.1 (e.g. `oak_d_pro_link`). The view updates as the bag plays in Terminal 1.
 
 ---
 
@@ -273,7 +312,7 @@ source /opt/ros/humble/setup.bash
 ros2 run rviz2 rviz2
 ```
 
-In RViz: **Add** → **By topic** → choose an image topic (e.g. `/oak_d_pro/color/image_raw`). Set **Fixed Frame** (e.g. `oak_d_pro_link`) if the image doesn’t show.
+In RViz: **Add** → **By topic** → choose an image topic (same names as in the bag; e.g. `/oak_d_pro/color/image_raw`). Set **Fixed Frame** (e.g. `oak_d_pro_link`) if the image doesn’t show. To find your topic names and frame_id on the recording machine, see **Section 6.1**.
 
 ---
 

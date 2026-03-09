@@ -22,6 +22,7 @@
         ros-humble-serial-driver \
         ros-humble-asio-cmake-module \
         ros-humble-io-context \
+        ros-humble-rviz2 \
         libusb-1.0-0-dev \
         git \
         build-essential \

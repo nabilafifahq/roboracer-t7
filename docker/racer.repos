@@ -17,3 +17,10 @@ repositories:
     type: git
     url: https://github.com/Triton-AI/Livox-SDK2.git
     version: master
+
+  # Planning: pure pursuit path follower (waypoint following). See docs/CONTROL_AND_PLANNING_STACK.md.
+  # If upstream is ROS 1 only, replace url/version with a ROS 2 fork (e.g. search "pure_pursuit ros2 humble").
+  src/pure_pursuit:
+    type: git
+    url: https://github.com/f1tenth-dev/pure_pursuit.git
+    version: main
