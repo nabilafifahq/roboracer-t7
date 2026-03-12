@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-asio-cmake-module \
 	ros-humble-rviz2 \
 	ros-humble-rviz-imu-plugin \
+	ros-humble-pointcloud-to-laserscan \
 	libusb-1.0-0-dev \
 	git \
 	build-essential \
@@ -28,6 +29,7 @@ RUN apt-get update && apt-get install -y \
 # 3. SETUP WORKSPACE
 WORKDIR /race_ws
 COPY docker/racer.repos .
+COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointcloud_to_laserscan_indoor.yaml
 
 RUN echo "===== racer.repos inside image =====" && \
     cat /race_ws/racer.repos
