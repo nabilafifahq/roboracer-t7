@@ -30,6 +30,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /race_ws
 COPY docker/racer.repos .
 COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointcloud_to_laserscan_indoor.yaml
+COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
+COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
+COPY bringup.launch.py /race_ws/bringup.launch.py
 
 RUN echo "===== racer.repos inside image =====" && \
     cat /race_ws/racer.repos
@@ -56,6 +59,7 @@ RUN ls -la /usr/local/lib | grep -E 'livox|lidar' || true
 
 # (Optional) overlay local src AFTER importing (your repo currently only has src/scripts)
 COPY src ./src
+COPY wall_follow_script ./src/wall_follow_script
 
 # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
 RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive

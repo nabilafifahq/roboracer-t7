@@ -10,11 +10,23 @@ import os
 
 def generate_launch_description() -> LaunchDescription:
     livox_launch_dir = os.path.join(
-        get_package_share_directory("livox_ros_driver2"), "launch"
+        get_package_share_directory("livox_ros_driver2"), "launch_ROS2"
+    )
+    f1tenth_launch_dir = os.path.join(
+        get_package_share_directory("f1tenth_stack"), "launch"
     )
 
     return LaunchDescription(
         [
+            # Base drive stack: joy_node, joy_teleop, mux, ackermann_to_vesc, vesc_driver.
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(f1tenth_launch_dir, "no_lidar_bringup_launch.py")
+                ),
+                launch_arguments={
+                    "joy_config": "/race_ws/config/joy_rc_steer_fix.yaml",
+                }.items(),
+            ),
             # Livox Mid-360 driver (publishes /livox/lidar)
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -31,7 +43,7 @@ def generate_launch_description() -> LaunchDescription:
                     ("cloud_in", "/livox/lidar"),
                     ("scan", "/scan"),
                 ],
-                parameters=["docker/config/pointcloud_to_laserscan_indoor.yaml"],
+                parameters=["/race_ws/config/pointcloud_to_laserscan_indoor.yaml"],
             ),
             # Wall-following autonomy node (reactive_control)
             Node(
@@ -39,28 +51,22 @@ def generate_launch_description() -> LaunchDescription:
                 executable="wall_follow_node",
                 name="wall_follow_node",
                 output="screen",
-            ),
-            # Ackermann command multiplexer
-            Node(
-                package="ackermann_mux",
-                executable="ackermann_mux",
-                name="ackermann_mux",
-                output="screen",
-                parameters=["config/ackermann_mux_topics.yaml"],
-                remappings=[
-                    # Ensure mux output goes to the topic expected by ackermann_to_vesc
-                    ("ackermann_cmd", "drive"),
+                parameters=[
+                    {
+                        "target_speed_mps": 0.25,
+                        "min_speed_mps": 0.0,
+                        "max_speed_mps": 0.35,
+                        "max_steering_angle_rad": 0.22,
+                        "manual_override_latch": True,
+                        "front_obstacle_distance_m": 1.0,
+                        "side_obstacle_distance_m": 0.9,
+                        "centering_gain": 0.8,
+                        "steering_smoothing_alpha": 0.25,
+                        "deadman_button_index": 1,
+                        "lidar_drop_timeout_s": 2.0,
+                    }
                 ],
             ),
-            # Ackermann to VESC bridge (ROS 1, typically run via bridge or separately)
-            # If you are running this via a ROS 1 bridge, comment this out here and
-            # launch it on the ROS 1 side instead.
-            # Node(
-            #     package="vesc_ackermann",
-            #     executable="ackermann_to_vesc_node",
-            #     name="ackermann_to_vesc_node",
-            #     output="screen",
-            # ),
         ]
     )
 
