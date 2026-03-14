@@ -9,8 +9,6 @@ RoboRacer (1/10 Robot Indoors) project for:
 - Professor/Mentor: Jack Silberman
 - Team Members: Derek Huang, Nabila Afifah Qotrunnada, Ricky Zhang
 
-This repository is prepared as a handoff for new students.
-
 ---
 
 ## Start Here (required)
