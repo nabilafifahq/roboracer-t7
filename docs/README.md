@@ -29,5 +29,4 @@ Architecture and references:
 
 Demo media:
 
-- `Manual Drive Demo.mp4`
 - `How to set Battery to Storage Mode.mov`
