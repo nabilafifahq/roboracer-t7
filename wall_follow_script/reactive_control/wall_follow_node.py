@@ -22,7 +22,10 @@ KI = 0.0
 
 
 def angle_to_distance(theta_rad: float, lidar_array: list[float], angle_min: float, angle_increment: float):
+    if not lidar_array or angle_increment <= 0.0:
+        return float("inf")
     index = int((theta_rad - angle_min) / angle_increment)
+    index = max(0, min(index, len(lidar_array) - 1))
     distance = lidar_array[index]
 
     return distance
@@ -164,10 +167,11 @@ class WallFollowNode(Node):
             error_diff = 0.0
             error_integral = 0.0
         else:
-            dt = self.get_clock().now().nanoseconds - self.last_time
+            dt_ns = self.get_clock().now().nanoseconds - self.last_time
+            dt_s = max(dt_ns / 1e9, 1e-6)
             de = error - self.last_errors_window[-1]
-            error_diff = de / dt
-            error_integral = np.sum(self.last_errors_window) * dt
+            error_diff = de / dt_s
+            error_integral = np.sum(self.last_errors_window) * dt_s
 
         steering = error * KP + error_integral * KI + error_diff * KD
         steering = (1.0 - self.steering_smoothing_alpha) * self.last_steering + self.steering_smoothing_alpha * steering
@@ -220,7 +224,7 @@ class WallFollowNode(Node):
             return
         if pressed and not self.deadman_prev_pressed:
             self.manual_latched = True
-            self.get_logger().warn("LB pressed: autonomy latched off until relaunch.")
+            self.get_logger().warn("Deadman button pressed: autonomy latched off until relaunch.")
             self.send_control_command(0.0, 0.0)
         self.deadman_prev_pressed = pressed
 

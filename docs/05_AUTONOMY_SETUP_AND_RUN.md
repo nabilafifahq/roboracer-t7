@@ -12,6 +12,13 @@ Inside container:
 ros2 launch bringup.launch.py
 ```
 
+Expected:
+- Launch stays running
+- These nodes appear in `ros2 node list`:
+  - `/livox_ros_driver2_node`
+  - `/pointcloud_to_laserscan`
+  - `/wall_follow_node`
+
 This launch includes:
 
 - base manual stack (`f1tenth_stack`)
@@ -37,6 +44,12 @@ Expected:
 - `/livox/lidar` active
 - `/scan` active
 - `/drive` active (autonomy command stream)
+
+If `/scan` is missing, run:
+
+```bash
+ros2 node info /pointcloud_to_laserscan
+```
 
 ---
 
@@ -67,3 +80,6 @@ If manual latch or LiDAR latch triggers stop, relaunch:
 Ctrl+C
 ros2 launch /race_ws/bringup.launch.py
 ```
+
+Expected:
+- Autonomy command stream on `/drive` resumes after relaunch

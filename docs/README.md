@@ -17,14 +17,13 @@ Core runbooks:
 - `07_TROUBLESHOOTING.md`
 - `08_FULL_STACK_REFERENCE_MANUAL.md`
 - `09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md`
+- `10_EXTERNAL_CREDITS.md`
 
 Architecture and references:
 
 - `MANUAL_AUTONOMY_NODE_TOPIC_FLOW.md`
 - `MANUAL_AUTONOMY_NODE_TOPIC_FLOW.pdf`
 - `POINTCLOUD2_TO_LASERSCAN_CAR_RUNBOOK.md`
-- `ROBORACER_NODE_MAP.md`
-- `RUNBOOK_ARM64_CAMERA_DOCKER.md`
 - `LiDar Mid-360 Manual Decipher.pdf` (raw reference dump from team notes)
 
 Demo media:

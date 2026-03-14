@@ -18,7 +18,8 @@ Use this file as the single source of truth for runtime versions and update hist
 
 - OS: Linux on Raspberry Pi host
 - ROS 2: **Humble**
-- Container image: `nabilafifahq/roboracer-t7:main-latest`
+- Class-validated image: `nabilafifahq/roboracer-t7:main-latest`
+- Team/user image (optional): `<your_dockerhub_username>/roboracer-t7:<tag>`
 - Docker Engine on car host: *(fill from command below)*
 - Docker Engine on dev machine: *(optional)*
 
@@ -55,7 +56,7 @@ Update this block after each validated release.
 - Git commit: `c450be7` *(update as needed)*
 - Docker image tag: `nabilafifahq/roboracer-t7:main-latest`
 - Docker image digest: `sha256:a9069f88e7d6a5cf67909f0c162ad88ad961ff3b22307779cc3045beefe5ec94` *(update if changed)*
-- Docker version (car host): `TODO` *(run `docker --version` on car host and replace)*
+- Docker version (car host): `<set from car host: docker --version>`
 - Docker version (dev machine): `Docker version 29.1.3, build f52814d`
 - ROS 2 distro: `Humble`
 - Manual config source: `config/joy_rc_steer_fix.yaml`

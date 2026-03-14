@@ -1,23 +1,35 @@
 # Troubleshooting
 
-Quick fixes for common failures.
+This page lists real issues seen on this project and the exact recovery steps.
 
 ---
 
-## SSH fails (`.local` unknown host)
+## 1) SSH fails (`.local` unknown host)
 
-- Use direct IP instead of `.local`
-- Confirm car is on same subnet
-- Scan for SSH-open hosts:
+Symptoms:
+- `ping ucsd-blue.local` -> unknown host
+- `ssh ucsd-blue@ucsd-blue.local` fails immediately
+
+Fix:
+1. Confirm laptop is on Wi-Fi `ucsd_robocar`.
+2. Confirm target vehicle is the **1tenth blue car**.
+3. Try direct IP:
+
+```bash
+ssh ucsd-blue@<car_ip>
+```
+
+4. If IP is unknown, scan port 22:
 
 ```bash
 python3 - <<'PY'
 import socket
-for i in range(1,255):
-    ip=f"192.168.11.{i}"
-    s=socket.socket(); s.settimeout(0.2)
+for i in range(1, 255):
+    ip = f"192.168.11.{i}"
+    s = socket.socket()
+    s.settimeout(0.2)
     try:
-        if s.connect_ex((ip,22))==0:
+        if s.connect_ex((ip, 22)) == 0:
             print(ip)
     finally:
         s.close()
@@ -26,11 +38,144 @@ PY
 
 ---
 
-## VESC not connected
+## 2) SSH times out or connection refused
 
-- Verify `/dev/sensors/vesc` symlink
-- Verify cable/power
-- Check:
+Symptoms:
+- `Operation timed out`
+- `Connection refused`
+
+Likely causes:
+- Pi did not boot correctly (power path issue)
+- SSH service not reachable yet
+
+Fix:
+1. Verify car power path first (this was a real blocker before).
+2. Power cycle car, wait 20-60 seconds.
+3. Retry SSH by IP.
+
+---
+
+## 3) `joy_node` / `joy_teleop` crash with params parse error
+
+Symptom:
+- `RCLInvalidROSArgsError` with `joy_teleop.yaml`
+
+Cause:
+- Wrong/invalid joy config file passed by default launch.
+
+Fix:
+- Always launch with:
+
+```bash
+ros2 launch f1tenth_stack no_lidar_bringup_launch.py joy_config:=/race_ws/config/joy_rc_steer_fix.yaml
+```
+
+Verify:
+
+```bash
+ros2 topic hz /joy
+ros2 topic hz /teleop
+```
+
+---
+
+## 4) `/teleop` appears frozen or wheels do not move
+
+Symptoms:
+- `/joy` updates but `/teleop` stays zero
+- Car does not move
+
+Checks:
+1. Deadman switch mapping is correct (`deadman_buttons: [1]`).
+2. SD/LB switch is in ON state when testing.
+3. VESC is connected and powered.
+
+Verify:
+
+```bash
+ros2 topic echo /joy --once
+ros2 topic hz /teleop
+ros2 topic hz /commands/motor/speed
+ros2 topic hz /commands/servo/position
+```
+
+---
+
+## 5) Bringup fails: Livox launch file not found
+
+Symptom:
+- `No such file or directory ... livox_ros_driver2 ... msg_MID360_launch.py`
+
+Fix:
+- Ensure `bringup.launch.py` uses Livox `launch_ROS2` path.
+
+---
+
+## 6) `/scan` not received due QoS mismatch
+
+Symptom:
+- warning about incompatible QoS (`RELIABILITY`)
+- `/scan` has no usable stream in autonomy node
+
+Fix:
+- Keep `/scan` subscriber on `BEST_EFFORT` + `VOLATILE` in `wall_follow_node`.
+
+Verify bridge path clearly:
+
+```bash
+ros2 node list
+ros2 node info /pointcloud_to_laserscan
+ros2 topic hz /livox/lidar
+ros2 topic hz /scan
+```
+
+Expected:
+- node `/pointcloud_to_laserscan` exists
+- `/livox/lidar` and `/scan` both publish
+
+---
+
+## 7) `/drive` not publishing after startup
+
+Symptoms:
+- No autonomy command stream
+- Node logs show autonomy latched off
+
+Causes:
+- manual override latch triggered
+- LiDAR fault latch triggered (invalid for timeout)
+
+Fix:
+1. Stop launch (`Ctrl+C`).
+2. Relaunch:
+
+```bash
+ros2 launch bringup.launch.py
+```
+
+3. Do not toggle deadman if you want autonomy to continue.
+
+---
+
+## 8) VESC not connected
+
+Symptoms:
+- `Failed to connect to the VESC`
+- no motor response
+
+Fix:
+
+```bash
+mkdir -p /dev/sensors
+if [ -e /dev/ttyACM1 ]; then
+  ln -sf /dev/ttyACM1 /dev/sensors/vesc
+else
+  ln -sf /dev/ttyACM0 /dev/sensors/vesc
+fi
+ls -l /dev/sensors/vesc
+```
+
+Verify:
 
 ```bash
 ros2 topic echo /sensors/core --once
@@ -38,47 +183,38 @@ ros2 topic echo /sensors/core --once
 
 ---
 
-## `/teleop` not publishing
+## 9) Livox network settings need change (no driver fork wanted)
 
-- Confirm `deadman_buttons` matches your controller (`[1]` in current config)
-- Check `/joy` updates:
+Goal:
+- Update MID360 host/LiDAR IP/ports without editing `racer.repos` or forking driver.
+
+Fix:
+1. Prepare local JSON file with your network values.
+2. Start container with runtime override:
 
 ```bash
-ros2 topic echo /joy
+LIVOX_MID360_CONFIG_PATH=~/MID360_config.local.json ./scripts/car_run.sh
 ```
+
+This mounts your file to:
+- `/race_ws/src/drivers/livox_ros_driver2/config/MID360_config.json`
 
 ---
 
-## `/scan` not publishing
+## 10) Container shell confusion (`docker` vs `ros2`)
 
-- Verify `/livox/lidar` exists
-- Verify bridge node is running
-- Check:
+Host shell prompt example:
+- `ucsd-blue@UCSD-Blue:~ $`
 
-```bash
-ros2 topic hz /livox/lidar
-ros2 topic hz /scan
-```
+Container shell prompt example:
+- `root@UCSD-Blue:/race_ws#`
 
----
-
-## `/drive` not publishing
-
-- Verify `wall_follow_node` running
-- Ensure manual latch is not currently active
-- Relaunch unified stack:
+Rules:
+- Run `docker ...` on host shell.
+- Run `ros2 ...` in container shell.
+- If opening a manual new shell, source ROS again:
 
 ```bash
-Ctrl+C
-ros2 launch /race_ws/bringup.launch.py
+source /opt/ros/humble/setup.bash
+[ -f /race_ws/install/setup.bash ] && source /race_ws/install/setup.bash
 ```
-
----
-
-## Container workflow confusion
-
-Use helper scripts:
-
-- `./scripts/car_run.sh`
-- `./scripts/car_exec.sh`
-- `./scripts/car_launch.sh`

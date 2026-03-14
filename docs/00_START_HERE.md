@@ -15,6 +15,19 @@ This repo is the handoff guide for new students. Follow the docs in this exact o
 7. `docs/07_TROUBLESHOOTING.md`
 8. `docs/08_FULL_STACK_REFERENCE_MANUAL.md`
 9. `docs/09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md`
+10. `docs/10_EXTERNAL_CREDITS.md`
+
+---
+
+## How to use these docs
+
+For each step:
+1. Open the file listed in order.
+2. Run commands exactly as shown.
+3. Check the "Expected" result before moving to the next file.
+4. If a step fails, go to `docs/07_TROUBLESHOOTING.md`, fix it, then continue.
+
+Do not skip the manual-drive validation step before autonomy.
 
 ---
 

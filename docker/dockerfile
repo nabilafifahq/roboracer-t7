@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-pcl-ros \
 	&& rm -rf /var/lib/apt/lists/*
 
-# 3. SETUP WORKSPACE
+# 2. SETUP WORKSPACE
 WORKDIR /race_ws
 COPY docker/racer.repos .
 COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointcloud_to_laserscan_indoor.yaml
@@ -34,18 +34,14 @@ COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
 COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
 COPY bringup.launch.py /race_ws/bringup.launch.py
 
-RUN echo "===== racer.repos inside image =====" && \
-    cat /race_ws/racer.repos
-
-# 4. Download repos
+# 3. Download repos
 RUN mkdir -p src
 
 # Import only the ROS workspace repos into src/
-RUN pwd && ls -la && vcs import src < racer.repos
+RUN vcs import src < racer.repos
 
-# Clone Livox-SDK2 outside src/ so colcon won't treat it as a ROS package
-# (matches racer.repos intent)
-RUN git clone --branch master --depth 1 https://github.com/fish-mouse/Livox-SDK2 /race_ws/livox_sdk2
+# Clone Livox-SDK2 outside src/ so colcon won't treat it as a ROS package.
+RUN git clone --branch master --depth 1 https://github.com/Livox-SDK/Livox-SDK2 /race_ws/livox_sdk2
 
 # Build & install Livox-SDK2 so livox_ros_driver2 can link against it
 RUN cd /race_ws/livox_sdk2 && \
@@ -55,10 +51,7 @@ RUN cd /race_ws/livox_sdk2 && \
     make install && \
     ldconfig
 
-RUN ls -la /usr/local/lib | grep -E 'livox|lidar' || true
-
-# (Optional) overlay local src AFTER importing (your repo currently only has src/scripts)
-COPY src ./src
+# Overlay first-party autonomy package on top of imported workspace.
 COPY wall_follow_script ./src/wall_follow_script
 
 # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
@@ -70,15 +63,14 @@ RUN cp -f /race_ws/src/drivers/livox_ros_driver2/package_ROS2.xml \
 
 # Sanity check: livox_ros_driver2 should be a ROS package (must have package.xml)
 RUN set -euxo pipefail; \
-  ls -la /race_ws/src/drivers/livox_ros_driver2 || true; \
   test -f /race_ws/src/drivers/livox_ros_driver2/package.xml; \
   echo "OK: livox_ros_driver2/package.xml exists"
 
-# 5. BUILD THE SYSTEM
+# 4. BUILD THE SYSTEM
 RUN source /opt/ros/humble/setup.sh && \
 	colcon build --symlink-install --parallel-workers 1
 
-# 6. SETUP ENTRYPOINT
+# 5. SETUP ENTRYPOINT
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

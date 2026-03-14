@@ -28,6 +28,7 @@ Then follow docs in this exact order:
 7. `docs/07_TROUBLESHOOTING.md`
 8. `docs/08_FULL_STACK_REFERENCE_MANUAL.md` (full hardware/software/glossary/reference guide)
 9. `docs/09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md` (official runtime versions + release notes)
+10. `docs/10_EXTERNAL_CREDITS.md` (third-party repo credits and license notes)
 
 ---
 
@@ -45,10 +46,6 @@ Then follow docs in this exact order:
   - first-party autonomy package (`reactive_control`)
 - `bringup.launch.py`
   - unified launch entrypoint used in runtime image
-
-External/vendor code (not first-party docs target):
-
-- `vesc-main/`
 
 ---
 
@@ -80,5 +77,5 @@ root@UCSD-Blue:/race_ws#
 
 - Node/topic communication map: `docs/MANUAL_AUTONOMY_NODE_TOPIC_FLOW.md`
 - PointCloud2 -> LaserScan focused runbook: `docs/POINTCLOUD2_TO_LASERSCAN_CAR_RUNBOOK.md`
-- ARM64 camera notes: `docs/RUNBOOK_ARM64_CAMERA_DOCKER.md`
+- External credits/licenses: `docs/10_EXTERNAL_CREDITS.md`
 - Docs index (all docs + media): `docs/README.md`

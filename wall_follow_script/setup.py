@@ -12,9 +12,9 @@ setup(
     ],
     install_requires=["setuptools"],
     zip_safe=True,
-    maintainer="root",
-    maintainer_email="nicolas_lauzon@outlook.com",
-    description="TODO: Package description",
+    maintainer="RoboRacer Team 7",
+    maintainer_email="nabilafifahq@gmail.com",
+    description="Reactive wall-follow controller with manual safety latch for RoboRacer indoor autonomy.",
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={

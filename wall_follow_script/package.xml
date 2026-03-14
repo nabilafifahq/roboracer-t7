@@ -3,8 +3,8 @@
 <package format="3">
   <name>reactive_control</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="nicolas_lauzon@outlook.com">root</maintainer>
+  <description>Reactive wall-follow controller with manual safety latch for RoboRacer indoor autonomy.</description>
+  <maintainer email="nabilafifahq@gmail.com">RoboRacer Team 7</maintainer>
   <license>Apache-2.0</license>
 
   <depend>std_msgs</depend>

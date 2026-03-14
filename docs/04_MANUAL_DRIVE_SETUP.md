@@ -12,6 +12,10 @@ Inside container:
 ros2 launch f1tenth_stack no_lidar_bringup_launch.py joy_config:=/race_ws/config/joy_rc_steer_fix.yaml
 ```
 
+Expected:
+- Nodes start without crash (`joy_node`, `joy_teleop`, `ackermann_mux`, `vesc_driver_node`)
+- No parameter parse errors
+
 Current validated RC config file:
 
 - `config/joy_rc_steer_fix.yaml`
@@ -41,6 +45,7 @@ Expected:
 
 - moving RC sticks changes `/teleop`
 - motor and servo command topics update
+- rates are non-zero while control input is active
 
 ---
 
@@ -53,3 +58,12 @@ ros2 topic echo /sensors/core --once
 ```
 
 If missing or faulted, debug VESC connection/power first.
+
+Also check deadman state quickly:
+
+```bash
+ros2 topic echo /joy --once
+```
+
+Expected:
+- button index `1` changes between `0` and `1` when SD/LB switch is toggled

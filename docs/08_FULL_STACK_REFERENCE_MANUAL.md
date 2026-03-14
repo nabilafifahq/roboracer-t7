@@ -21,6 +21,10 @@ Current baseline image:
 
 - `nabilafifahq/roboracer-t7:main-latest`
 
+For custom pushes, each team/user should publish to their own namespace:
+
+- `<your_dockerhub_username>/roboracer-t7:<tag>`
+
 ---
 
 ## 2) Hardware Setup (Current Team Platform)
@@ -36,6 +40,7 @@ Important:
 
 - For manual safety, deadman switch is mapped in `config/joy_rc_steer_fix.yaml`.
 - For LiDAR, host IP + LiDAR IP + ports must match `MID360_config.json` expectations.
+- Use runtime override with `LIVOX_MID360_CONFIG_PATH=<local_json> ./scripts/car_run.sh` to adjust network settings without forking `livox_ros_driver2`.
 
 ---
 
@@ -73,6 +78,7 @@ Core command flow:
   - LiDAR-to-scan bridge parameters
 - Livox MID-360 config (`MID360_config.json` in Livox driver area)
   - host IP, LiDAR IP, and ports must match network setup
+  - can be overridden at runtime via `LIVOX_MID360_CONFIG_PATH`
 
 ---
 
@@ -129,7 +135,6 @@ Core command flow:
 Demo/safety media in this repo:
 
 - `How to set Battery to Storage Mode.mov`
-- `Manual Drive Demo.mp4`
 
 ---
 
@@ -142,7 +147,6 @@ RoboRacer:
 
 F1TENTH docs:
 
-- [Jetson optional setup](https://f1tenth.readthedocs.io/en/foxy_test/getting_started/software_setup/optional_software_nx.html)
 - [Wireless software combine](https://f1tenth.readthedocs.io/en/foxy_test/getting_started/software_setup/software_combine.html)
 - [VESC firmware setup](https://f1tenth.readthedocs.io/en/foxy_test/getting_started/firmware/firmware_vesc.html)
 - [Hokuyo ethernet setup](https://f1tenth.readthedocs.io/en/foxy_test/getting_started/firmware/firmware_hokuyo10.html)
@@ -172,3 +176,4 @@ ROS2 parameters tutorials:
 - Root should stay clean and minimal (single onboarding entry in `README.md`).
 - Keep commands copy-pasteable and versioned with code changes.
 - Prefer updating existing runbooks over creating duplicate files.
+- Keep third-party attributions updated in `10_EXTERNAL_CREDITS.md`.

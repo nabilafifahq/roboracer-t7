@@ -29,7 +29,7 @@ Optional but recommended:
 ## 3) Accounts and access
 
 - GitHub access to this repository
-- Docker Hub access to pull/push images
+- Docker Hub account (only if you will push your own image)
 - SSH access to car host
 
 ---
@@ -55,3 +55,8 @@ nabilafifahq/roboracer-t7:main-latest
 ```
 
 Use this unless your team explicitly validates a newer tag.
+If you build/push your own image, use your own namespace:
+
+```bash
+<your_dockerhub_username>/roboracer-t7:<tag>
+```

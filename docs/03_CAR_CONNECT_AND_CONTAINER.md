@@ -4,6 +4,20 @@ This page is for connecting to the car host and entering the runtime container.
 
 ---
 
+## 0) Network prerequisite (before SSH)
+
+1. Connect your laptop to Wi-Fi: `ucsd_robocar`
+2. Confirm you are targeting the correct vehicle: **1tenth blue car**
+3. The expected host/user for this car is:
+
+```bash
+ssh ucsd-blue@ucsd-blue.local
+```
+
+If your laptop is not on `ucsd_robocar`, SSH discovery usually fails.
+
+---
+
 ## 1) Power-on sequence (do this first)
 
 Use this order every time for consistent behavior:
@@ -35,12 +49,28 @@ If `.local` fails, use the known IP:
 ssh ucsd-blue@<car_ip>
 ```
 
+Expected:
+- Host shell prompt appears, similar to: `ucsd-blue@UCSD-Blue:~ $`
+
 ---
 
 ## 3) Pull image
 
+Class default:
+
 ```bash
 docker pull nabilafifahq/roboracer-t7:main-latest
+```
+
+Expected:
+- Pull completes without error
+- Image visible in `docker images`
+
+If your team publishes its own image, set:
+
+```bash
+export IMAGE=<your_dockerhub_username>/roboracer-t7:main-latest
+docker pull ${IMAGE}
 ```
 
 ---
@@ -52,6 +82,26 @@ Recommended helper:
 ```bash
 ./scripts/car_run.sh
 ```
+
+Expected:
+- Container starts
+- Prompt changes to container prompt, similar to: `root@UCSD-Blue:/race_ws#`
+
+To override image for your own namespace:
+
+```bash
+IMAGE=<your_dockerhub_username>/roboracer-t7:main-latest ./scripts/car_run.sh
+```
+
+Optional: override Livox MID360 config (host IP/LiDAR IP/ports) without forking:
+
+```bash
+cp /path/to/your/MID360_config.json ~/MID360_config.local.json
+LIVOX_MID360_CONFIG_PATH=~/MID360_config.local.json ./scripts/car_run.sh
+```
+
+This bind-mounts your local config into the container at:
+`/race_ws/src/drivers/livox_ros_driver2/config/MID360_config.json`
 
 Useful helpers:
 
@@ -75,7 +125,7 @@ docker run --rm -it \
   --device=/dev/ttyACM1 \
   -v /dev/sensors:/dev/sensors \
   -v /dev/bus/usb:/dev/bus/usb \
-  nabilafifahq/roboracer-t7:main-latest
+  ${IMAGE:-nabilafifahq/roboracer-t7:main-latest}
 ```
 
 ---
@@ -87,6 +137,24 @@ Inside container:
 ```bash
 source /opt/ros/humble/setup.bash
 [ -f /race_ws/install/setup.bash ] && source /race_ws/install/setup.bash
+```
+
+Expected:
+
+```bash
+printenv | grep -E '^ROS_DISTRO='
+```
+
+Output should include `ROS_DISTRO=humble`.
+
+Important:
+
+- `./scripts/car_exec.sh` is designed to open a shell with ROS already sourced.
+- If you open any additional shell manually (for example with `docker exec -it ... bash`), run the same source commands again in that shell.
+- Quick check:
+
+```bash
+printenv | grep -E '^ROS_DISTRO='
 ```
 
 ---
@@ -104,6 +172,9 @@ else
 fi
 ls -l /dev/sensors/vesc
 ```
+
+Expected:
+- `/dev/sensors/vesc` points to `/dev/ttyACM1` or `/dev/ttyACM0`
 
 ---
 
