@@ -2,7 +2,7 @@
 
 This is the current communication map for the unified launch:
 
-- `ros2 launch /race_ws/bringup.launch.py`
+- `ros2 launch bringup.launch.py`
 
 It combines:
 
