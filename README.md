@@ -68,6 +68,12 @@ From repo root on the car host, run these scripts for faster workflow.
 - To launch unified stack for autodrive: `./scripts/car_launch.sh`
 - To stop named container: `./scripts/car_stop.sh`
 
+When you successfully started the docker container or opened a running docker container, the shell prompt will now become:
+
+```
+root@UCSD-Blue:/race_ws#
+```
+
 ---
 
 ## Additional Reference Docs
