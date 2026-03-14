@@ -48,20 +48,25 @@ Then follow docs in this exact order:
 
 External/vendor code (not first-party docs target):
 
-- `third_party_research/`
 - `vesc-main/`
 
 ---
 
-## Helper Scripts (fast workflow)
+## Helper Scripts
 
-From repo root on the car host:
+Be sure the shell prompt reads the following.
 
-- Start container: `./scripts/car_run.sh`
-- Check container status: `./scripts/car_status.sh`
-- Open sourced shell in running container: `./scripts/car_exec.sh`
-- Launch unified stack: `./scripts/car_launch.sh`
-- Stop named container: `./scripts/car_stop.sh`
+```
+root@UCSD-Blue:~#
+```
+
+From repo root on the car host, run these scripts for faster workflow.
+
+- To start the docker container: `./scripts/car_run.sh`
+- To check the container status: `./scripts/car_status.sh`
+- To open sourced shell in running docker container: `./scripts/car_exec.sh`
+- To launch unified stack for autodrive: `./scripts/car_launch.sh`
+- To stop named container: `./scripts/car_stop.sh`
 
 ---
 
