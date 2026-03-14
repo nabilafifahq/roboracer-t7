@@ -9,7 +9,7 @@ This page is for connecting to the car host and entering the runtime container.
 Use this order every time for consistent behavior:
 
 1. Turn ON the RC controller first.
-2. Turn ON car power (Pi + VESC + sensors).
+2. Turn ON car power.
 3. Wait 20-60 seconds for Pi boot and Wi-Fi.
 4. Confirm network is up from your laptop:
 
