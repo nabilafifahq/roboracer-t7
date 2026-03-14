@@ -4,7 +4,24 @@ This page is for connecting to the car host and entering the runtime container.
 
 ---
 
-## 1) SSH into car host
+## 1) Power-on sequence (do this first)
+
+Use this order every time for consistent behavior:
+
+1. Turn ON the RC controller first.
+2. Turn ON car power (Pi + VESC + sensors).
+3. Wait 20-60 seconds for Pi boot and Wi-Fi.
+4. Confirm network is up from your laptop:
+
+```bash
+ping -c 2 ucsd-blue.local
+```
+
+If `.local` does not resolve, use known car IP in later steps.
+
+---
+
+## 2) SSH into car host
 
 Preferred:
 
@@ -20,7 +37,7 @@ ssh ucsd-blue@<car_ip>
 
 ---
 
-## 2) Pull image
+## 3) Pull image
 
 ```bash
 docker pull nabilafifahq/roboracer-t7:main-latest
@@ -28,7 +45,7 @@ docker pull nabilafifahq/roboracer-t7:main-latest
 
 ---
 
-## 3) Start container
+## 4) Start container
 
 Recommended helper:
 
@@ -63,7 +80,7 @@ docker run --rm -it \
 
 ---
 
-## 4) Source ROS environment
+## 5) Source ROS environment
 
 Inside container:
 
@@ -74,7 +91,7 @@ source /opt/ros/humble/setup.bash
 
 ---
 
-## 5) Setup VESC symlink
+## 6) Setup VESC symlink
 
 Inside container:
 
@@ -90,10 +107,19 @@ ls -l /dev/sensors/vesc
 
 ---
 
-## 6) Open additional sourced shell (optional)
+## 7) Open additional sourced shell (optional)
 
 From host:
 
 ```bash
 ./scripts/car_exec.sh
 ```
+
+---
+
+## 8) Power-off sequence (recommended)
+
+1. Stop ROS launch (`Ctrl+C`).
+2. Stop container (`./scripts/car_stop.sh` or exit running shell).
+3. Turn OFF car power.
+4. Turn OFF RC controller last.
