@@ -6,7 +6,7 @@ This page is for connecting to the car host and entering the runtime container.
 
 ## 0) Network prerequisite (before SSH)
 
-1. Connect your laptop to Wi-Fi: `ucsd_robocar`
+1. Ensure your laptop's network is the same as that of the car.
 2. Confirm you are targeting the correct vehicle: **1tenth blue car**
 3. The expected host/user for this car is:
 
@@ -14,7 +14,7 @@ This page is for connecting to the car host and entering the runtime container.
 ssh ucsd-blue@ucsd-blue.local
 ```
 
-If your laptop is not on `ucsd_robocar`, SSH discovery usually fails.
+If the network doesn't match, SSH discovery usually fails.
 
 ---
 
