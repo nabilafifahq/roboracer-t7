@@ -9,7 +9,7 @@ This is the baseline indoor autonomy flow.
 Inside container:
 
 ```bash
-ros2 launch /race_ws/bringup.launch.py
+ros2 launch bringup.launch.py
 ```
 
 This launch includes:
