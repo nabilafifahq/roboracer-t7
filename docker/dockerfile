@@ -24,6 +24,10 @@ RUN apt-get update && apt-get install -y \
 	build-essential \
 	ros-humble-pcl-conversions \
 	ros-humble-pcl-ros \
+	ifstat \
+    ntpdate \
+    sysstat \
+    lm-sensors \
 	&& rm -rf /var/lib/apt/lists/*
 
 # 2. SETUP WORKSPACE
@@ -42,6 +46,8 @@ RUN vcs import src < racer.repos
 
 # Clone Livox-SDK2 outside src/ so colcon won't treat it as a ROS package.
 RUN git clone --branch master --depth 1 https://github.com/Livox-SDK/Livox-SDK2 /race_ws/livox_sdk2
+
+RUN git clone --depth 1 https://github.com/AgoraRobotics/ros2-system-monitor /race_ws/src/ros2-system-monitor
 
 # Build & install Livox-SDK2 so livox_ros_driver2 can link against it
 RUN cd /race_ws/livox_sdk2 && \
