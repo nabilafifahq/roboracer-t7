@@ -4,7 +4,11 @@
 # Using Python 3.7 here avoids many build failures for pinned old deps
 # (e.g., numpy==1.18.1) on newer Python versions.
 #
-FROM python:3.7-slim-buster
+#
+# Use a supported Debian base so apt-get works.
+# (buster repos are EOL and may 404.)
+#
+FROM python:3.7-slim-bullseye
 
 # Keep image non-interactive and reproducible-ish
 ENV DEBIAN_FRONTEND=noninteractive
