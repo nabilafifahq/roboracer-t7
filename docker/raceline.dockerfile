@@ -1,4 +1,10 @@
-FROM python:3.8-slim
+#
+# TUMFTM/global_racetrajectory_optimization is developed against
+# Ubuntu 20.04 + Python 3.7 era scientific-python stacks.
+# Using Python 3.7 here avoids many build failures for pinned old deps
+# (e.g., numpy==1.18.1) on newer Python versions.
+#
+FROM python:3.7-slim-buster
 
 # Keep image non-interactive and reproducible-ish
 ENV DEBIAN_FRONTEND=noninteractive
@@ -11,6 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libopenblas-dev \
     liblapack-dev \
+    python3-distutils \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
@@ -27,7 +35,11 @@ RUN git clone --depth 1 --branch "${TUM_REPO_REF}" "${TUM_REPO_URL}" /work/globa
 WORKDIR /work/global_racetrajectory_optimization
 
 # Install python deps
-RUN python -m pip install --no-cache-dir --upgrade pip && \
+#
+# Pin installer tooling to versions compatible with older packages.
+# Newer pip/setuptools can break source builds of old numpy/scipy.
+#
+RUN python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
     python -m pip install --no-cache-dir -r requirements.txt
 
 # Default to interactive shell; users can run python scripts directly.
