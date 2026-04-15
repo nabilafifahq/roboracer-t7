@@ -17,10 +17,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
+    g++ \
     gfortran \
     pkg-config \
     libopenblas-dev \
     liblapack-dev \
+    libgfortran5 \
     python3-distutils \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -44,7 +46,10 @@ WORKDIR /work/global_racetrajectory_optimization
 # Newer pip/setuptools can break source builds of old numpy/scipy.
 #
 RUN python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
-    python -m pip install --no-cache-dir -r requirements.txt
+    python -m pip install --no-cache-dir -r requirements.txt && \
+    # quadprog wheels can be ABI-problematic; rebuild from source at a known-good version.
+    python -m pip uninstall -y quadprog || true && \
+    python -m pip install --no-cache-dir --no-binary=:all: "quadprog==0.1.6"
 
 # Default to interactive shell; users can run python scripts directly.
 CMD ["bash"]

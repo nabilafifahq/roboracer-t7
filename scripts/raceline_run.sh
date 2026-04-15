@@ -16,9 +16,11 @@ set -euo pipefail
 IMAGE="${IMAGE:-roboracer-t7-raceline:latest}"
 CONTAINER_NAME="${CONTAINER_NAME:-roboracer_raceline}"
 DATA_DIR="${DATA_DIR:-}"
+PLATFORM="${PLATFORM:-linux/amd64}"
 
 echo "Using image: ${IMAGE}"
 echo "Container name: ${CONTAINER_NAME}"
+echo "Platform: ${PLATFORM}"
 
 if docker ps -a --format '{{.Names}}' | grep -x "${CONTAINER_NAME}" >/dev/null 2>&1; then
   echo "Removing existing container '${CONTAINER_NAME}'..."
@@ -28,6 +30,7 @@ fi
 DOCKER_ARGS=(
   --rm -it
   --name "${CONTAINER_NAME}"
+  --platform "${PLATFORM}"
   -w /work/global_racetrajectory_optimization
 )
 
