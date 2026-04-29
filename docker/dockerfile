@@ -60,6 +60,9 @@ RUN cd /race_ws/livox_sdk2 && \
 # Overlay first-party autonomy package on top of imported workspace.
 COPY wall_follow_script ./src/wall_follow_script
 
+# Overlay first-party pure pursuit FollowPath controller.
+COPY pure_pursuit_followpath ./src/pure_pursuit_followpath
+
 # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
 RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive
 
