@@ -1,9 +1,9 @@
 ackermann_mux:
   ros__parameters:
     topics:
-      # Your autonomy node publishes AckermannDriveStamped here:
+      # Autonomy (wall_follow_node) publishes AckermannDriveStamped here:
       navigation:
-        topic: /ackermann_mux/input/nav_0
+        topic: /drive
         timeout: 0.2
         priority: 10
 

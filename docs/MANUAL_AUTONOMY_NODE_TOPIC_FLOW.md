@@ -2,7 +2,7 @@
 
 This is the current communication map for the unified launch:
 
-- `ros2 launch bringup.launch.py`
+- `ros2 launch /race_ws/bringup.launch.py` (optional: `record_bag:=true bag_name:=<prefix>` for `ros2 bag record`; see `docs/06_VALIDATION_CHECKLIST.md`)
 
 It combines:
 
@@ -22,10 +22,11 @@ It combines:
 | `ackermann_to_vesc_node` | `ackermann_cmd` | `/commands/motor/speed`, `/commands/servo/position` | Converts Ackermann command to VESC motor/servo commands |
 | `vesc_driver_node` | `/commands/motor/speed`, `/commands/servo/position` | `/sensors/core` and VESC telemetry topics | Sends commands to hardware and reports state |
 | `vesc_to_odom_node` | VESC state topics | `/odom` | Produces wheel odometry |
-| `livox_ros_driver2_node` | (device/network data) | `/livox/lidar`, `/livox/imu` | Publishes 3D LiDAR/IMU stream |
+| `livox_ros_driver2_node` | (device/network data) | `/livox/lidar` (`sensor_msgs/msg/PointCloud2`), `/livox/imu` | Mid-360; image build sets PointCloud2 + `frame_id` `laser` (see `docs/07_TROUBLESHOOTING.md` §10) |
 | `pointcloud_to_laserscan_node` | `/livox/lidar` | `/scan` | Converts PointCloud2 into LaserScan |
 | `wall_follow_node` (`reactive_control`) | `/scan`, `/joy` | `/drive` | Autonomy controller (slow hallway behavior + safety latches) |
 | `static_transform_publisher` | - | `/tf_static` | Publishes fixed frame transform(s) |
+| `ros2_system_monitor` (included launch) | system metrics | `/diagnostics` | Optional post-race / health context for bags |
 
 ---
 

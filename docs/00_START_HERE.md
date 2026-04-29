@@ -16,6 +16,7 @@ This repo is the handoff guide for new students. Follow the docs in this exact o
 8. `docs/08_FULL_STACK_REFERENCE_MANUAL.md`
 9. `docs/09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md`
 10. `docs/10_EXTERNAL_CREDITS.md`
+11. `docs/11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md`
 
 ---
 

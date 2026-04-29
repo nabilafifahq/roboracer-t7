@@ -101,6 +101,29 @@ ros2 topic hz /commands/servo/position
 
 ---
 
+## 4b) Front wheels steer (react to obstacles) but car does not roll — motor speed ~0
+
+**Typical cause: `ackermann_mux` priority.** `joy_teleop` on **`/teleop`** has **higher priority** than autonomy on **`/drive`**. If `/teleop` is still publishing messages with **`speed ≈ 0`** but **non-zero `steering_angle`** (e.g. RC sticks moved, noisy axes, or autorepeat), the mux **keeps using `/teleop`** and **never applies `/drive`’s forward speed** — you see **steering only**, no drive.
+
+**Checks:**
+
+```bash
+ros2 topic echo /teleop --once
+ros2 topic echo /drive --once
+ros2 topic echo /ackermann_cmd --once
+```
+
+- If **`/ackermann_cmd.drive.speed`** tracks **`/teleop`** (near zero) while **`/drive.speed`** is non-zero, mux is choosing teleop.
+
+**Mitigations:**
+
+1. For **autonomy-only** tests: do not touch the speed/steer sticks; ensure **deadman** behavior matches `joy_teleop` so `/teleop` is not continuously “winning” with zero speed.
+2. Confirm **`config/ackermann_mux_topics.yaml`** lists navigation on **`/drive`** (same topic `wall_follow_node` publishes to).
+
+**Also verify** `wall_follow` is not latched (`manual_latched` / LiDAR fault) and VESC is not in a mode that blocks motor with non-zero servo.
+
+---
+
 ## 5) Bringup fails: Livox launch file not found
 
 Symptom:
@@ -150,7 +173,7 @@ Fix:
 2. Relaunch:
 
 ```bash
-ros2 launch bringup.launch.py
+ros2 launch /race_ws/bringup.launch.py
 ```
 
 3. Do not toggle deadman if you want autonomy to continue.
@@ -199,9 +222,69 @@ LIVOX_MID360_CONFIG_PATH=~/MID360_config.local.json ./scripts/car_run.sh
 This mounts your file to:
 - `/race_ws/src/drivers/livox_ros_driver2/config/MID360_config.json`
 
+Keep `pcl_data_type` set to `0` in that JSON if you want `sensor_msgs/msg/PointCloud2` on `/livox/lidar` (same as the baked image default).
+
 ---
 
-## 10) Container shell confusion (`docker` vs `ros2`)
+## 10) Livox MID360: PointCloud2, TF, and rosbag (`/livox/lidar`)
+
+**What the stack expects**
+
+1. **`xfer_format = 0`** in `msg_MID360_launch.py` so `/livox/lidar` is **`sensor_msgs/msg/PointCloud2`**, not Livox custom. Upstream often ships `xfer_format = 1` (custom), which breaks `ros2 bag record` (multiple types) and is harder for `pointcloud_to_laserscan`.
+
+2. **`pcl_data_type = 0`** per lidar in `MID360_config.json` (`lidar_configs[]`). If this stays `1`, the driver can still behave like custom cloud even when ROS params say PointCloud2.
+
+3. **`frame_id` = `laser`** in `msg_MID360_launch.py` (not `livox_frame`). `no_lidar_bringup` already publishes **`base_link` → `laser`**. The bridge uses `target_frame: base_link` in `pointcloud_to_laserscan_indoor.yaml`, so the cloud must be in a frame that connects to `base_link`. Using **`laser`** avoids an extra static TF.
+
+**Permanent behavior (current Docker build)**
+
+`docker/dockerfile` patches the vendored `livox_ros_driver2` **before** `colcon build`: JSON `pcl_data_type`, launch `xfer_format` and `frame_id`. Rebuild/push the image to get this on a fresh container.
+
+**Unified launch**
+
+```bash
+source /opt/ros/humble/setup.bash
+source /race_ws/install/setup.bash
+ros2 launch /race_ws/bringup.launch.py
+```
+
+**Temporary patch inside an old container** (paths resolve via `get_package_share_directory`)
+
+```bash
+source /opt/ros/humble/setup.bash
+source /race_ws/install/setup.bash
+
+PREFIX="$(python3 -c "from ament_index_python.packages import get_package_share_directory; import os; print(get_package_share_directory('livox_ros_driver2'))")"
+MID360_JSON="${PREFIX}/config/MID360_config.json"
+LIVOX_LAUNCH="${PREFIX}/launch_ROS2/msg_MID360_launch.py"
+
+cp -a "${MID360_JSON}" "${MID360_JSON}.bak.manual"
+python3 << PY
+import json
+from pathlib import Path
+p = Path("${MID360_JSON}")
+data = json.loads(p.read_text())
+for cfg in data.get("lidar_configs", []):
+    cfg["pcl_data_type"] = 0
+p.write_text(json.dumps(data, indent=2) + "\n")
+PY
+
+cp -a "${LIVOX_LAUNCH}" "${LIVOX_LAUNCH}.bak.manual"
+sed -i -E 's/^([[:space:]]*xfer_format[[:space:]]*=[[:space:]]*)[01]/\10/' "${LIVOX_LAUNCH}"
+sed -i -E "s/(frame_id[[:space:]]*=[[:space:]]*)'livox_frame'/\1'laser'/" "${LIVOX_LAUNCH}"
+grep -E 'xfer_format|frame_id' "${LIVOX_LAUNCH}" | head
+```
+
+Verify:
+
+```bash
+ros2 topic info /livox/lidar -v
+ros2 topic echo /livox/lidar --once | head -15
+```
+
+---
+
+## 11) Container shell confusion (`docker` vs `ros2`)
 
 Host shell prompt example:
 - `ucsd-blue@UCSD-Blue:~ $`

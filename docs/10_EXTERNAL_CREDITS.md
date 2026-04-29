@@ -16,6 +16,12 @@ These are the exact repos currently pulled by `docker/racer.repos`:
   - URL: <https://github.com/fish-mouse/livox_ros_driver2>
   - Purpose: Livox MID-360 ROS 2 driver used by this project
 
+Additional clone in `docker/dockerfile` (not listed in `racer.repos`):
+
+- `AgoraRobotics/ros2-system-monitor`
+  - URL: <https://github.com/AgoraRobotics/ros2-system-monitor>
+  - Purpose: `ros2_system_monitor` package; `bringup.launch.py` includes `system_monitor.launch.py` for `/diagnostics` alongside optional `ros2 bag record`.
+
 ---
 
 ## B) Original upstream projects to credit

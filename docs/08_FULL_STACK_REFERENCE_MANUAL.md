@@ -79,6 +79,7 @@ Core command flow:
 - Livox MID-360 config (`MID360_config.json` in Livox driver area)
   - host IP, LiDAR IP, and ports must match network setup
   - can be overridden at runtime via `LIVOX_MID360_CONFIG_PATH`
+  - Docker build sets `pcl_data_type` to `0` and patches `msg_MID360_launch.py` for `xfer_format`/`frame_id` so `/livox/lidar` is PointCloud2 in the `laser` frame (details: `docs/07_TROUBLESHOOTING.md` §10)
 
 ---
 
