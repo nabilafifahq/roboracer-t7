@@ -1,6 +1,16 @@
 # PointCloud2 to LaserScan Runbook (Fishmouse Branch)
 
-This runbook is for `sync-fishmouse-main` and assumes the stack is delivered by Docker image only.
+This runbook assumes the stack is delivered by Docker image only.
+
+**Current unified stack:** `bringup.launch.py` already includes Livox + `pointcloud_to_laserscan`. Prefer:
+
+```bash
+source /opt/ros/humble/setup.bash
+source /race_ws/install/setup.bash
+ros2 launch /race_ws/bringup.launch.py
+```
+
+The image build patches Livox so `/livox/lidar` is **`sensor_msgs/msg/PointCloud2`** with **`frame_id` = `laser`** (matches `base_link` → `laser` TF). See `docs/07_TROUBLESHOOTING.md` §10 if you need manual patches on an old image.
 
 Goal:
 

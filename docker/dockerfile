@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-pcl-conversions \
 	ros-humble-pcl-ros \
 	ifstat \
-    ntpdate \
-    sysstat \
-    lm-sensors \
+	ntpdate \
+	sysstat \
+	lm-sensors \
 	&& rm -rf /var/lib/apt/lists/*
 
 # 2. SETUP WORKSPACE
@@ -37,6 +37,7 @@ COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointclou
 COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
 COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
 COPY bringup.launch.py /race_ws/bringup.launch.py
+RUN mkdir -p /race_ws/bags
 
 # 3. Download repos
 RUN mkdir -p src
@@ -44,10 +45,11 @@ RUN mkdir -p src
 # Import only the ROS workspace repos into src/
 RUN vcs import src < racer.repos
 
+# System monitor (diagnostics); bringup includes its launch when recording / analysis.
+RUN git clone --depth 1 https://github.com/AgoraRobotics/ros2-system-monitor /race_ws/src/ros2-system-monitor
+
 # Clone Livox-SDK2 outside src/ so colcon won't treat it as a ROS package.
 RUN git clone --branch master --depth 1 https://github.com/Livox-SDK/Livox-SDK2 /race_ws/livox_sdk2
-
-RUN git clone --depth 1 https://github.com/AgoraRobotics/ros2-system-monitor /race_ws/src/ros2-system-monitor
 
 # Build & install Livox-SDK2 so livox_ros_driver2 can link against it
 RUN cd /race_ws/livox_sdk2 && \
@@ -71,6 +73,24 @@ RUN cp -f /race_ws/src/drivers/livox_ros_driver2/package_ROS2.xml \
 RUN set -euxo pipefail; \
   test -f /race_ws/src/drivers/livox_ros_driver2/package.xml; \
   echo "OK: livox_ros_driver2/package.xml exists"
+
+# Livox MID360 defaults from upstream use custom cloud + frame_id livox_frame; we need
+# PointCloud2 on /livox/lidar and frame "laser" to match f1tenth base_link -> laser TF.
+RUN python3 << 'PY'
+import json
+from pathlib import Path
+
+p = Path("/race_ws/src/drivers/livox_ros_driver2/config/MID360_config.json")
+data = json.loads(p.read_text())
+for cfg in data.get("lidar_configs", []):
+    cfg["pcl_data_type"] = 0
+p.write_text(json.dumps(data, indent=2) + "\n")
+PY
+RUN set -euxo pipefail; \
+  LIV="/race_ws/src/drivers/livox_ros_driver2/launch_ROS2/msg_MID360_launch.py"; \
+  sed -i -E 's/^([[:space:]]*xfer_format[[:space:]]*=[[:space:]]*)[01]/\10/' "$LIV"; \
+  sed -i -E "s/(frame_id[[:space:]]*=[[:space:]]*)'livox_frame'/\1'laser'/" "$LIV"; \
+  grep -E '^[[:space:]]*xfer_format|frame_id[[:space:]]*=' "$LIV" | head -n 3
 
 # 4. BUILD THE SYSTEM
 RUN source /opt/ros/humble/setup.sh && \

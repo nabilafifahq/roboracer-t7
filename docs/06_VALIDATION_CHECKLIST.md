@@ -32,6 +32,22 @@ Use this checklist before declaring a test successful.
 
 ---
 
+## Optional rosbag recording (bringup)
+
+`bringup.launch.py` can start **`ros2 bag record`** when enabled, and includes **`ros2_system_monitor`** so **`/diagnostics`** is available for post-run analysis (see commit `a088558` pattern).
+
+Enable when launching:
+
+```bash
+ros2 launch /race_ws/bringup.launch.py record_bag:=true bag_name:=my_run
+```
+
+Defaults: `record_bag:=false`, `bag_dir:=/race_ws/bags`, `bag_name:=race_bag`. Bags are written under `bag_dir` (ensure the directory exists or use a mounted volume).
+
+Recorded topics include `/drive`, `/scan`, `/livox/lidar`, `/teleop`, `/tf`, `/tf_static`, `/odom`, `/joy`, `/diagnostics` (edit `bag_topics` in `bringup.launch.py` to change).
+
+---
+
 ## Optional RViz validation
 
 ```bash

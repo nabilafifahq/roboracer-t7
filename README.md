@@ -29,6 +29,7 @@ Then follow docs in this exact order:
 8. `docs/08_FULL_STACK_REFERENCE_MANUAL.md` (full hardware/software/glossary/reference guide)
 9. `docs/09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md` (official runtime versions + release notes)
 10. `docs/10_EXTERNAL_CREDITS.md` (third-party repo credits and license notes)
+11. `docs/11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md` (kill-switch/fail-safe test plan + competition rule impact)
 
 ---
 

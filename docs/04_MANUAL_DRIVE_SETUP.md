@@ -25,8 +25,8 @@ Current validated RC config file:
 
 ## 2) Control behavior
 
-- SD/LB switch ON (button 1 = 1): manual commands enabled
-- SD/LB switch OFF (button 1 = 0): manual commands blocked/zeroed
+- Deadman ON (`buttons[1] == 1`): manual commands enabled
+- Deadman OFF (`buttons[1] == 0`): manual commands blocked/zeroed
 
 ---
 
@@ -66,4 +66,4 @@ ros2 topic echo /joy --once
 ```
 
 Expected:
-- button index `1` changes between `0` and `1` when SD/LB switch is toggled
+- button index `1` changes between `0` and `1` when the deadman switch is toggled
