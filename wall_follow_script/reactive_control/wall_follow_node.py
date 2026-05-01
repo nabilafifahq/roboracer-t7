@@ -46,12 +46,12 @@ class WallFollowNode(Node):
         self.create_subscription(LaserScan, "/scan", self.lidar_callback, 10)
 
         qos = QoSProfile(
-			history=HistoryPolicy.KEEP_LAST,
-			depth=10,
-			reliability=ReliabilityPolicy.BEST_EFFORT,
-		)
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+        )
 
-		self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", qos)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", qos)
 
         self.last_time = None
         self.last_steering = 0.0
