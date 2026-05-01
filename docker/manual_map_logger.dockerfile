@@ -28,6 +28,10 @@ COPY wall_follow_script/ ./src/wall_follow_script/
 RUN source /opt/ros/humble/setup.sh && \
     colcon build --symlink-install --packages-select reactive_control
 
+RUN mkdir -p /race_ws/scripts
+COPY scripts/manual_map_csv_to_tum_track.py /race_ws/scripts/manual_map_csv_to_tum_track.py
+RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py
+
 COPY docker/manual_map_logger_entrypoint.sh /manual_map_logger_entrypoint.sh
 RUN chmod +x /manual_map_logger_entrypoint.sh
 

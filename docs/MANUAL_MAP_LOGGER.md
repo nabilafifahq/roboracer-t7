@@ -129,3 +129,185 @@ source install/setup.bash
 ## Optional next step
 
 You can add a launch-file flag (for example `record_mapping:=true`) in `bringup.launch.py` to start this node alongside manual drive. That was not added automatically; say if you want it wired in.
+
+---
+
+## End-to-end runbook (clear terminal layout)
+
+This section is the operational checklist to run manual mapping from start to finish.
+
+### Important rule before launch
+
+Before running `bringup.launch.py`, **turn ON the RC deadman/manual switch** so the system stays in manual priority and does not rely on autonomy commands.
+
+- Manual topic: `/teleop`
+- Autonomy topic: `/drive`
+- `ackermann_mux` priority gives manual (`/teleop`) higher priority.
+
+### Terminal map
+
+Use 3 terminals:
+
+- **Terminal 1 (Car host shell):** Start container
+- **Terminal 2 (Inside container):** Run unified stack (`bringup.launch.py`)
+- **Terminal 3 (Inside container):** Run `manual_map_logger` and stop it with `Ctrl+C`
+
+Optional:
+
+- **Terminal 4 (Laptop shell):** Copy CSV from car to laptop with `scp`
+
+### 0) Preconditions
+
+- RC transmitter ON
+- Car powered
+- Receiver bound to RC
+- Livox connected
+- VESC connected (`/dev/sensors/vesc` ready on host)
+- Docker image available on car:
+  - `nabilafifahq/roboracer-t7:main-manual-map-logger-20260428`
+
+### 1) Terminal 1 (car host): start Docker container
+
+```bash
+ssh ucsd-blue@ucsd-blue.local
+docker pull nabilafifahq/roboracer-t7:main-manual-map-logger-20260428
+mkdir -p ~/roboracer_logs
+sudo mkdir -p /dev/sensors
+# set the correct ttyACM for your car (example: ttyACM1)
+sudo ln -sf /dev/ttyACM1 /dev/sensors/vesc
+
+docker rm -f roboracer_t7 2>/dev/null || true
+docker run --rm -it \
+  --name roboracer_t7 \
+  --net=host \
+  --ipc=host \
+  --privileged \
+  --device=/dev/input/js0 \
+  --device=/dev/ttyACM0 \
+  --device=/dev/ttyACM1 \
+  -v /dev/sensors:/dev/sensors \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -v ~/roboracer_logs:/race_ws/logs \
+  nabilafifahq/roboracer-t7:main-manual-map-logger-20260428
+```
+
+Keep Terminal 1 open.
+
+### 2) Terminal 2 (inside container): launch stack
+
+Open a second shell and enter container:
+
+```bash
+ssh ucsd-blue@ucsd-blue.local
+docker exec -it roboracer_t7 bash
+source /opt/ros/humble/setup.bash
+[ -f /race_ws/install/setup.bash ] && source /race_ws/install/setup.bash
+```
+
+**Before the next command: confirm deadman/manual switch is ON.**
+
+Then run:
+
+```bash
+ros2 launch /race_ws/bringup.launch.py
+```
+
+Leave Terminal 2 running.
+
+### 3) Terminal 3 (inside container): run manual map logger
+
+Open third shell:
+
+```bash
+ssh ucsd-blue@ucsd-blue.local
+docker exec -it roboracer_t7 bash
+source /opt/ros/humble/setup.bash
+[ -f /race_ws/install/setup.bash ] && source /race_ws/install/setup.bash
+
+CSV=/race_ws/logs/manual_map_$(date +%Y%m%d_%H%M%S).csv
+echo "CSV=$CSV"
+
+ros2 run reactive_control manual_map_logger --ros-args \
+  -p world_frame:=odom \
+  -p robot_frame:=base_link \
+  -p scan_topic:=/scan \
+  -p output_csv:=$CSV \
+  -p record_hz:=10.0
+```
+
+Drive manually with RC for 1-3 laps, then press `Ctrl+C`.
+
+Note: a shutdown traceback (`rcl_shutdown already called`) may appear after `Ctrl+C`; logging is still valid if CSV rows were written.
+
+### 4) Terminal 3: verify CSV was captured
+
+```bash
+ls -lh /race_ws/logs
+LATEST=$(ls -t /race_ws/logs/manual_map_*.csv | head -n1)
+echo "$LATEST"
+wc -l "$LATEST"
+sed -n '1,5p' "$LATEST"
+tail -n 5 "$LATEST"
+```
+
+Success criteria:
+
+- `wc -l` is greater than `1`
+- Header is present
+- `x,y,yaw_rad,left_wall_m,right_wall_m` are populated in many rows
+
+### 5) Terminal 4 (laptop): copy latest CSV to laptop
+
+Run this from your laptop shell (not inside car/container shell):
+
+```bash
+scp ucsd-blue@ucsd-blue.local:~/roboracer_logs/manual_map_YYYYMMDD_HHMMSS.csv ~/Downloads/
+```
+
+Example:
+
+```bash
+scp ucsd-blue@ucsd-blue.local:~/roboracer_logs/manual_map_20260429_201233.csv ~/Downloads/
+```
+
+Verify:
+
+```bash
+ls -lh ~/Downloads/manual_map_*.csv
+```
+
+### 6) Repeat runs cleanly
+
+For each new run:
+
+1. Keep Terminal 2 stack running
+2. Re-run Terminal 3 logger command (new timestamped filename)
+3. Drive lap(s)
+4. Stop logger and validate
+5. Copy file to laptop
+
+### 7) Export to TUM raceline optimizer track format
+
+The optimizer in [TUMFTM/global_racetrajectory_optimization](https://github.com/TUMFTM/global_racetrajectory_optimization) does **not** read the manual logger header directly. It loads `inputs/tracks/<name>.csv` with **four numeric columns per row** (no header row):
+
+`x_m, y_m, w_tr_right_m, w_tr_left_m`
+
+Convert on the **laptop** or **inside the car image** using the repo script:
+
+```bash
+python3 /race_ws/scripts/manual_map_csv_to_tum_track.py \
+  /path/to/manual_map_20260429_201233.csv \
+  -o ~/raceline_data/inputs/tracks/hallway.csv \
+  --step 2 \
+  --comment
+```
+
+Mapping (heuristic):
+
+- `x`, `y` from the logger → reference line
+- `right_wall_m` → `w_tr_right_m`
+- `left_wall_m` → `w_tr_left_m`
+
+Rows with empty or non‑finite wall distances are skipped.
+
+Then in the **raceline Docker** image (see `docker/raceline.dockerfile` and `./scripts/raceline_run.sh`), copy `hallway.csv` into `inputs/tracks/`, set `file_paths["track_name"] = "hallway"` in `main_globaltraj.py`, and run `python main_globaltraj.py`. Default output: `outputs/traj_race_cl.csv`.

@@ -65,6 +65,7 @@ From repo root on the car host, run these scripts for faster workflow.
 - To open sourced shell in running docker container: `./scripts/car_exec.sh`
 - To launch unified stack for autodrive: `./scripts/car_launch.sh`
 - To stop named container: `./scripts/car_stop.sh`
+- After a manual map CSV is on disk: `python3 /race_ws/scripts/manual_map_csv_to_tum_track.py` (see `docs/MANUAL_MAP_LOGGER.md` §7) to produce a TUM `inputs/tracks/*.csv` file for the raceline optimizer container
 
 When you successfully started the docker container or opened a running docker container, the shell prompt will now become:
 

@@ -37,6 +37,8 @@ COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointclou
 COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
 COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
 COPY bringup.launch.py /race_ws/bringup.launch.py
+COPY scripts/ /race_ws/scripts/
+RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py
 RUN mkdir -p /race_ws/bags
 
 # 3. Download repos
