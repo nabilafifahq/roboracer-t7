@@ -1,48 +1,7 @@
-# -----------------------------------------------------------------------------
-# Stage: TUM global raceline optimizer
-# https://github.com/TUMFTM/global_racetrajectory_optimization
-# Python 3.7 venv isolates pinned scientific deps from ROS (Python 3.10).
-# -----------------------------------------------------------------------------
-FROM python:3.7-slim-bullseye AS tum_raceline
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-ARG TUM_REPO_URL="https://github.com/TUMFTM/global_racetrajectory_optimization.git"
-ARG TUM_REPO_REF="master"
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    build-essential \
-    g++ \
-    gfortran \
-    pkg-config \
-    libopenblas-dev \
-    liblapack-dev \
-    libgfortran5 \
-    python3-distutils \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /build
-RUN git clone --depth 1 --branch "${TUM_REPO_REF}" "${TUM_REPO_URL}" /build/global_racetrajectory_optimization
-
-WORKDIR /build/global_racetrajectory_optimization
-RUN python -m venv .venv && \
-    .venv/bin/python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
-    .venv/bin/pip install --no-cache-dir -r requirements.txt && \
-    (.venv/bin/pip uninstall -y quadprog || true) && \
-    .venv/bin/pip install --no-cache-dir --no-binary=:all: "quadprog==0.1.6"
-
-# -----------------------------------------------------------------------------
-# Final stage: ROS 2 car stack + offline TUM optimizer tree (above)
-# -----------------------------------------------------------------------------
 FROM ros:humble-ros-base
 
 # Use bash so we can "source" ROS setup files
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Headless plotting if optimizer runs scripts with matplotlib
-ENV MPLBACKEND=Agg
 
 # 1. INSTALL SYSTEM TOOLS
 RUN apt-get update && apt-get install -y \
@@ -139,14 +98,7 @@ RUN set -euxo pipefail; \
 RUN source /opt/ros/humble/setup.sh && \
 	colcon build --symlink-install --parallel-workers 1
 
-# 5. TUM raceline optimizer (Python 3.7 venv from tum_raceline stage)
-COPY --from=tum_raceline /build/global_racetrajectory_optimization \
-    /race_ws/tum_global_racetrajectory_optimization
-
-COPY docker/run_tum_raceline_optimizer.sh /race_ws/scripts/run_tum_raceline_optimizer.sh
-RUN chmod +x /race_ws/scripts/run_tum_raceline_optimizer.sh
-
-# 6. SETUP ENTRYPOINT
+# 5. SETUP ENTRYPOINT
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

@@ -310,16 +310,4 @@ Mapping (heuristic):
 
 Rows with empty or non‑finite wall distances are skipped.
 
-**Run the optimizer (two options):**
-
-1. **Inside the main car image** (same `nabilafifahq/roboracer-t7` build that includes the ROS stack):  
-   TUM code is installed at `/race_ws/tum_global_racetrajectory_optimization` with a Python 3.7 **`.venv`** (kept separate from ROS). After conversion, place the track file at  
-   `/race_ws/tum_global_racetrajectory_optimization/inputs/tracks/<name>.csv`, set `file_paths["track_name"] = "<name>"` in `main_globaltraj.py`, then:
-
-   ```bash
-   /race_ws/scripts/run_tum_raceline_optimizer.sh
-   ```
-
-   Default output: `/race_ws/tum_global_racetrajectory_optimization/outputs/traj_race_cl.csv` (see upstream [Running the code](https://github.com/TUMFTM/global_racetrajectory_optimization)).
-
-2. **Separate lightweight image** (optional, for laptop-only workflow): `docker/raceline.dockerfile` and `./scripts/raceline_run.sh` still work as before.
+Then in the **raceline Docker** image (see `docker/raceline.dockerfile` and `./scripts/raceline_run.sh`), copy `hallway.csv` into `inputs/tracks/`, set `file_paths["track_name"] = "hallway"` in `main_globaltraj.py`, and run `python main_globaltraj.py`. Default output: `outputs/traj_race_cl.csv`.
