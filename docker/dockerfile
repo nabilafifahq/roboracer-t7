@@ -44,6 +44,10 @@ RUN mkdir -p /race_ws/bags
 # 3. Download repos
 RUN mkdir -p src
 
+# Optional external optimizer source (kept outside src so colcon ignores it).
+ARG TUM_REPO_URL="https://github.com/TUMFTM/global_racetrajectory_optimization.git"
+ARG TUM_REPO_REF="master"
+
 # Import only the ROS workspace repos into src/
 RUN vcs import src < racer.repos
 
@@ -52,6 +56,9 @@ RUN git clone --depth 1 https://github.com/AgoraRobotics/ros2-system-monitor /ra
 
 # Clone Livox-SDK2 outside src/ so colcon won't treat it as a ROS package.
 RUN git clone --branch master --depth 1 https://github.com/Livox-SDK/Livox-SDK2 /race_ws/livox_sdk2
+
+# Clone TUM global raceline optimizer source for offline workflow.
+RUN git clone --depth 1 --branch "${TUM_REPO_REF}" "${TUM_REPO_URL}" /race_ws/tum_global_racetrajectory_optimization
 
 # Build & install Livox-SDK2 so livox_ros_driver2 can link against it
 RUN cd /race_ws/livox_sdk2 && \
