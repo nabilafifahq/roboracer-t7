@@ -27,6 +27,8 @@ WORKDIR /build
 RUN git clone --depth 1 --branch "${TUM_REPO_REF}" "${TUM_REPO_URL}" /build/global_racetrajectory_optimization
 
 WORKDIR /build/global_racetrajectory_optimization
+# PyPI no longer serves casadi==3.5.1 manylinux wheels for current platforms; 3.5.5 is API-close.
+RUN sed -i 's/^casadi==3.5.1/casadi==3.5.5/' requirements.txt
 # numpy==1.18.1 sdists require Cython < 3 (Cython 3 breaks random/_pcg64.pyx).
 RUN python -m venv .venv && \
     .venv/bin/python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \

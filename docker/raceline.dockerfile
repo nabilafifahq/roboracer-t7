@@ -45,6 +45,8 @@ RUN git clone --depth 1 --branch "${TUM_REPO_REF}" "${TUM_REPO_URL}" /work/globa
 
 WORKDIR /work/global_racetrajectory_optimization
 
+RUN sed -i 's/^casadi==3.5.1/casadi==3.5.5/' requirements.txt
+
 # Install python deps
 #
 # Pin installer tooling to versions compatible with older packages.
