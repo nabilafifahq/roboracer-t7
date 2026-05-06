@@ -1,4 +1,9 @@
 #
+# Optional standalone optimizer image for laptop workflows.
+# The main race stack Dockerfile (docker/dockerfile) also bundles the same repo +
+# Python 3.7 venv at /race_ws/tum_global_racetrajectory_optimization plus
+# /race_ws/scripts/run_tum_raceline_optimizer.sh .
+#
 # TUMFTM/global_racetrajectory_optimization is developed against
 # Ubuntu 20.04 + Python 3.7 era scientific-python stacks.
 # Using Python 3.7 here avoids many build failures for pinned old deps
