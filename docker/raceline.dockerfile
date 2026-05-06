@@ -54,9 +54,7 @@ RUN sed -i 's/^casadi==3.5.1/casadi==3.5.5/' requirements.txt
 #
 RUN python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
     python -m pip install --no-cache-dir "cython>=0.29.14,<3" && \
-    python -m pip install --no-cache-dir --no-build-isolation "numpy==1.18.1" && \
-    grep -v '^numpy==' requirements.txt > /tmp/requirements_rest.txt && \
-    python -m pip install --no-cache-dir --no-build-isolation -r /tmp/requirements_rest.txt && \
+    python -m pip install --no-cache-dir --no-build-isolation -r requirements.txt && \
     # quadprog wheels can be ABI-problematic; rebuild from source at a known-good version.
     python -m pip uninstall -y quadprog || true && \
     python -m pip install --no-cache-dir --no-binary=:all: "quadprog==0.1.6"

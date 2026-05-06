@@ -30,13 +30,10 @@ WORKDIR /build/global_racetrajectory_optimization
 # PyPI no longer serves casadi==3.5.1 manylinux wheels for current platforms; 3.5.5 is API-close.
 RUN sed -i 's/^casadi==3.5.1/casadi==3.5.5/' requirements.txt
 # numpy==1.18.1 sdists require Cython < 3 (Cython 3 breaks random/_pcg64.pyx).
-# scipy metadata needs numpy already importable when using --no-build-isolation.
 RUN python -m venv .venv && \
     .venv/bin/python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
     .venv/bin/pip install --no-cache-dir "cython>=0.29.14,<3" && \
-    .venv/bin/pip install --no-cache-dir --no-build-isolation "numpy==1.18.1" && \
-    grep -v '^numpy==' requirements.txt > /tmp/requirements_rest.txt && \
-    .venv/bin/pip install --no-cache-dir --no-build-isolation -r /tmp/requirements_rest.txt && \
+    .venv/bin/pip install --no-cache-dir --no-build-isolation -r requirements.txt && \
     (.venv/bin/pip uninstall -y quadprog || true) && \
     .venv/bin/pip install --no-cache-dir --no-binary=:all: "quadprog==0.1.6"
 
