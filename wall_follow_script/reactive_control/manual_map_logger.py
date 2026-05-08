@@ -47,6 +47,8 @@ class ManualMapLogger(Node):
         self.declare_parameter("robot_frame", "base_link")
         self.declare_parameter("scan_topic", "/scan")
         self.declare_parameter("output_csv", "/race_ws/logs/manual_map.csv")
+        # If non-empty, overrides output_csv (so -p output_path:=... works as expected).
+        self.declare_parameter("output_path", "")
         self.declare_parameter("record_hz", 10.0)
         self.declare_parameter("left_window_rad", (1.10, 1.75))
         self.declare_parameter("right_window_rad", (-1.75, -1.10))
@@ -54,7 +56,8 @@ class ManualMapLogger(Node):
         self._world = str(self.get_parameter("world_frame").value)
         self._robot = str(self.get_parameter("robot_frame").value)
         self._scan_topic = str(self.get_parameter("scan_topic").value)
-        out = Path(str(self.get_parameter("output_csv").value))
+        path_override = str(self.get_parameter("output_path").value).strip()
+        out = Path(path_override) if path_override else Path(str(self.get_parameter("output_csv").value))
         out.parent.mkdir(parents=True, exist_ok=True)
         self._csv_path = out
         self._period = 1.0 / max(float(self.get_parameter("record_hz").value), 0.5)
@@ -176,8 +179,15 @@ def main(args: list[str] | None = None) -> None:
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
+        if rclpy.ok():
+            try:
+                rclpy.shutdown()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
