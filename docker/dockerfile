@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-rviz2 \
 	ros-humble-rviz-imu-plugin \
 	ros-humble-pointcloud-to-laserscan \
+	ros-humble-navigation2 \
+	ros-humble-nav2-bringup \
 	libusb-1.0-0-dev \
 	git \
 	build-essential \
@@ -40,7 +42,8 @@ COPY bringup.launch.py /race_ws/bringup.launch.py
 COPY scripts/ /race_ws/scripts/
 COPY docker/patch_tum_main_globaltraj_ros.py /tmp/patch_tum_main_globaltraj_ros.py
 COPY docker/patch_vesc_yaml.py /tmp/patch_vesc_yaml.py
-RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py
+RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py \
+	&& chmod +x /race_ws/scripts/traj_race_cl_to_waypoints.py
 RUN mkdir -p /race_ws/bags /race_ws/racelines
 
 # 3. Download repos
@@ -113,6 +116,7 @@ RUN cd /race_ws/livox_sdk2 && \
 
 # Overlay first-party autonomy package on top of imported workspace.
 COPY wall_follow_script ./src/wall_follow_script
+COPY roboracer_nav2_vector_pursuit ./src/roboracer_nav2_vector_pursuit
 
 # Init submodules (ackermann_mux, vesc, teleop_tools) inside f1tenth_system
 RUN git -C /race_ws/src/f1tenth_system submodule update --init --recursive

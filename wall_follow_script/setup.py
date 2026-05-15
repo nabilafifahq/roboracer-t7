@@ -22,6 +22,7 @@ setup(
             "wall_follow_node = reactive_control.wall_follow_node:main",
             "manual_map_logger = reactive_control.manual_map_logger:main",
             "manual_map_logger_smoke = reactive_control.manual_map_logger_smoke:main",
+            "traj_csv_path_publisher = reactive_control.traj_csv_path_publisher:main",
         ],
     },
 )
