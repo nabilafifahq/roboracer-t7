@@ -67,7 +67,7 @@ From repo root on the car host, run these scripts for faster workflow.
 - To stop named container: `./scripts/car_stop.sh`
 - TUM-ready track example: `raceline_data/inputs/tracks/raceline_opt_input.csv` (columns `x_m,y_m,w_tr_right_m,w_tr_left_m`—any filename such as `hallway.csv` works if content matches; set `track_name` to that basename in `main_globaltraj.py`)
 - Manual map logger CSV **not** yet in TUM column layout (current or older logger headers): run `python3 /race_ws/scripts/manual_map_csv_to_tum_track.py` (see `docs/MANUAL_MAP_LOGGER.md` §7)
-- After `traj_race_cl.csv` is on the robot (e.g. under `/race_ws/racelines/`): pure pursuit autonomy — see `docs/MANUAL_MAP_LOGGER.md` §8 and launch `bringup.launch.py` with **`autonomy:=raceline_pure_pursuit`** (instead of **`wall_follow`** default)
+- Raceline pipeline (manual map → TUM → Derek pursuit): **`docs/RACELINE_PIPELINE.md`** — use **`autonomy:=raceline_path`** then **`autonomy:=raceline`**
 
 When you successfully started the docker container or opened a running docker container, the shell prompt will now become:
 

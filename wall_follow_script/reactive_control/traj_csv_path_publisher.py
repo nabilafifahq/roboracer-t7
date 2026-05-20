@@ -1,4 +1,4 @@
-"""Publish nav_msgs/Path from TUM traj_race_cl.csv for pure pursuit (or similar) subscribers."""
+"""Publish nav_msgs/Path from TUM traj_race_cl.csv (Derek raceline stack)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from nav_msgs.msg import Path
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 
+from reactive_control.traj_csv_io import load_traj_xy_yaw
+
 
 def _yaw_to_quat(yaw: float) -> Quaternion:
     q = Quaternion()
@@ -20,34 +22,6 @@ def _yaw_to_quat(yaw: float) -> Quaternion:
     q.z = math.sin(yaw * 0.5)
     q.w = math.cos(yaw * 0.5)
     return q
-
-
-def _finite(x: float) -> bool:
-    return isinstance(x, float) and math.isfinite(x)
-
-
-def load_traj_rows(path: PathlibPath) -> list[tuple[float, float, float]]:
-    """Parse TUM export: (x_m, y_m, psi_rad) per data row."""
-    out: list[tuple[float, float, float]] = []
-    with path.open(encoding="utf-8", newline="") as f:
-        for line in f:
-            s = line.strip()
-            if not s or s.startswith("#"):
-                continue
-            if "x_m" in s and "y_m" in s:
-                continue
-            parts = [p.strip() for p in s.split(";")]
-            if len(parts) < 4:
-                continue
-            try:
-                x = float(parts[1])
-                y = float(parts[2])
-                psi = float(parts[3])
-            except ValueError:
-                continue
-            if _finite(x) and _finite(y) and _finite(psi):
-                out.append((x, y, psi))
-    return out
 
 
 def _make_nav_path(rows: list[tuple[float, float, float]]) -> Path:
@@ -85,11 +59,7 @@ class TrajCsvPathPublisher(Node):
             self.get_logger().fatal("step must be >= 1")
             raise SystemExit(1)
 
-        rows = load_traj_rows(csv_path)[::step]
-        if not rows:
-            self.get_logger().fatal(f"No trajectory rows parsed from {csv_path}")
-            raise SystemExit(1)
-
+        rows = load_traj_xy_yaw(csv_path)[::step]
         self._path_msg = _make_nav_path(rows)
         self._path_msg.header.frame_id = self._frame_id
 

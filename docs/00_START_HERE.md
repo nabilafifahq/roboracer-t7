@@ -37,6 +37,8 @@ Do not skip the manual-drive validation step before autonomy.
 - Manual RC driving with deadman safety switch.
 - LiDAR point cloud to LaserScan bridge for autonomy.
 - Slow indoor hallway autonomy (wall-follow baseline).
+- **Raceline:** manual map → TUM optimizer → Derek CSV→`/global_path` → optional Nav2 follow (`docs/RACELINE_PIPELINE.md`).
+- EKF + optional SLAM + Cyclone DDS in Docker.
 - Docker-first workflow for reproducibility.
 
 ---

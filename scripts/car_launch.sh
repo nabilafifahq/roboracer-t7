@@ -5,7 +5,8 @@ CONTAINER_NAME="${CONTAINER_NAME:-roboracer_t7}"
 IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:main-latest}"
 LAUNCH_FILE="${LAUNCH_FILE:-/race_ws/bringup.launch.py}"
 # Optional extra args after the launch file, e.g.
-# EXTRA_LAUNCH_ARGS='autonomy:=raceline_pure_pursuit raceline_csv:=/race_ws/racelines/traj_race_cl.csv'
+# EXTRA_LAUNCH_ARGS='autonomy:=raceline_path raceline_csv:=/race_ws/racelines/traj_race_cl.csv'
+# EXTRA_LAUNCH_ARGS='autonomy:=raceline raceline_csv:=/race_ws/racelines/traj_race_cl.csv pursuit_world_frame:=map use_slam:=true'
 EXTRA_LAUNCH_ARGS="${EXTRA_LAUNCH_ARGS:-}"
 
 CID="$(docker ps -q -f "name=^/${CONTAINER_NAME}$")"

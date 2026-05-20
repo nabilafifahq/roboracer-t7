@@ -7,7 +7,7 @@ ackermann_mux:
         timeout: 0.2
         priority: 10
 
-      # Nav2 vector pursuit (twist_to_ackermann) — autonomy:=nav2_vector_pursuit:
+      # Derek Nav2 vector pursuit (twist_to_ackermann) — autonomy:=raceline / nav2_vector_pursuit:
       nav2:
         topic: /nav2_cmd_ackermann
         timeout: 0.2

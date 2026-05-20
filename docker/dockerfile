@@ -170,6 +170,10 @@ RUN set -euxo pipefail; \
 RUN source /opt/ros/humble/setup.sh && \
 	colcon build --symlink-install --parallel-workers 1
 
+# Team mux: /teleop (100) > /nav2_cmd_ackermann (50) > /drive (10). Overwrite package defaults.
+COPY docker/install_mux_config.sh /tmp/install_mux_config.sh
+RUN chmod +x /tmp/install_mux_config.sh && /tmp/install_mux_config.sh
+
 # Fail build if vesc_to_odom is not configured to stop publishing odom->base_link (EKF must own it).
 RUN set -euxo pipefail; \
 	vesc="$(find /race_ws/install -path '*/share/*/config/vesc.yaml' -print -quit)"; \

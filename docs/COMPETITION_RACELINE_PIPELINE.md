@@ -12,7 +12,7 @@ This pipeline uses **SLAM Toolbox** (optional in `bringup.launch.py`) so poses a
 |--------|------|
 | `use_slam:=true` on `bringup.launch.py` | Starts `slam_toolbox` **online async** mapping (`map` → `odom`; EKF still publishes `odom` → `base_link`). |
 | `/race_ws/config/slam_toolbox_mapper_online_async.yaml` | `base_link`, `/scan`, tighter motion thresholds for slow RC mapping. |
-| `pursuit_world_frame:=map` | `raceline_pure_pursuit` looks up **`map` → `base_link`** so the car follows the raceline in the **same** frame as the optimizer output. |
+| `pursuit_world_frame:=map` | Derek **`traj_csv_path_publisher`** sets **`/global_path`** `frame_id` to **`map`** (use with `autonomy:=raceline_path` or `autonomy:=raceline`). |
 | `manual_map_logger` **`world_frame:=map`** | CSV **`x,y,yaw`** are in **`map`** (globally consistent while SLAM is healthy). |
 
 Rebuild / pull the Docker image that includes **`ros-humble-slam-toolbox`** and the YAML copy (see `docker/dockerfile`).
@@ -86,7 +86,7 @@ Copy the optimized CSV into the image (e.g. `/race_ws/racelines/my_race.csv`) an
 
 ```bash
 ros2 launch /race_ws/bringup.launch.py \
-  autonomy:=raceline_pure_pursuit \
+  autonomy:=raceline_path \
   use_slam:=true \
   pursuit_world_frame:=map \
   raceline_csv:=/race_ws/racelines/my_race.csv

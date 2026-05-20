@@ -11,6 +11,16 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 
+def _autonomy_one_of(autonomy: LaunchConfiguration, *modes: str):
+    """True when launch arg autonomy equals any of modes."""
+    if len(modes) == 1:
+        return EqualsSubstitution(autonomy, modes[0])
+    cond = EqualsSubstitution(autonomy, modes[0])
+    for mode in modes[1:]:
+        cond = OrCondition(cond, EqualsSubstitution(autonomy, mode))
+    return cond
+
+
 def generate_launch_description() -> LaunchDescription:
     livox_launch_dir = os.path.join(
         get_package_share_directory("livox_ros_driver2"), "launch_ROS2"
@@ -43,6 +53,8 @@ def generate_launch_description() -> LaunchDescription:
         "/commands/motor/speed",
         "/commands/servo/position",
         "/sensors/core",
+        "/global_path",
+        "/nav2_cmd_ackermann",
     ]
 
     bag_record = ExecuteProcess(
@@ -58,16 +70,27 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
 
-    raceline_pursuit_on = IfCondition(
-        EqualsSubstitution(autonomy, "raceline_pure_pursuit"),
+    # Derek / team raceline stack (see docs/AUTONOMY_MODES.md):
+    #   raceline_path — TUM CSV -> /global_path only (what Derek/Ricky tested on car)
+    #   raceline / nav2_vector_pursuit — CSV + Nav2 vector pursuit -> /nav2_cmd_ackermann
+    derek_nav2_on = IfCondition(
+        _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit")
     )
-    nav2_pursuit_on = IfCondition(
-        EqualsSubstitution(autonomy, "nav2_vector_pursuit"),
+    derek_path_pub_on = IfCondition(
+        OrCondition(
+            _autonomy_one_of(autonomy, "raceline_path", "csv_path"),
+            _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit"),
+        )
+    )
+    # Nabila geometric pursuit on /drive (experimental; not team-tested on UCSD-Blue).
+    geometric_pursuit_on = IfCondition(
+        _autonomy_one_of(autonomy, "raceline_pure_pursuit", "raceline_geometric")
     )
     wall_follow_on = UnlessCondition(
         OrCondition(
-            EqualsSubstitution(autonomy, "raceline_pure_pursuit"),
-            EqualsSubstitution(autonomy, "nav2_vector_pursuit"),
+            _autonomy_one_of(autonomy, "raceline_path", "csv_path"),
+            _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit"),
+            _autonomy_one_of(autonomy, "raceline_pure_pursuit", "raceline_geometric"),
         )
     )
     nav2_vector_launch = os.path.join(
@@ -82,19 +105,20 @@ def generate_launch_description() -> LaunchDescription:
                 "autonomy",
                 default_value="wall_follow",
                 description=(
-                    "'wall_follow' (default), 'raceline_pure_pursuit' (TUM CSV + geometric pursuit on /drive), "
-                    "or 'nav2_vector_pursuit' (Derek: Nav2 vector pursuit + /global_path from CSV)."
+                    "wall_follow (default); raceline_path or csv_path = Derek CSV->/global_path only (team-tested); "
+                    "raceline or nav2_vector_pursuit = CSV + Nav2 vector pursuit; "
+                    "raceline_pure_pursuit = geometric pursuit on /drive (experimental)."
                 ),
             ),
             DeclareLaunchArgument(
                 "raceline_csv",
                 default_value="/race_ws/racelines/traj_race_cl.csv",
-                description="Trajectory file for raceline_pure_pursuit (TUM traj_race_cl.csv columns).",
+                description="TUM traj_race_cl.csv (or optimizer output) for Derek path publisher / Nav2 modes.",
             ),
             DeclareLaunchArgument(
                 "pursuit_world_frame",
                 default_value="odom",
-                description="TF frame for raceline_pure_pursuit (odom with EKF; map with SLAM).",
+                description="frame_id for /global_path and pursuit TF (odom with EKF; map with SLAM).",
             ),
             DeclareLaunchArgument(
                 "use_slam",
@@ -166,7 +190,7 @@ def generate_launch_description() -> LaunchDescription:
                 }.items(),
                 condition=IfCondition(EqualsSubstitution(use_slam, "true")),
             ),
-            # Indoor autonomy: reactive wall-follow (default) OR TUM raceline + geometric pure pursuit.
+            # Indoor autonomy: wall-follow (default), Derek raceline stack, or experimental geometric pursuit.
             Node(
                 package="reactive_control",
                 executable="wall_follow_node",
@@ -194,7 +218,7 @@ def generate_launch_description() -> LaunchDescription:
                 executable="raceline_pure_pursuit_node",
                 name="raceline_pure_pursuit",
                 output="screen",
-                condition=raceline_pursuit_on,
+                condition=geometric_pursuit_on,
                 parameters=[
                     {
                         "trajectory_csv": ParameterValue(LaunchConfiguration("raceline_csv"), value_type=str),
@@ -207,13 +231,13 @@ def generate_launch_description() -> LaunchDescription:
                     },
                 ],
             ),
-            # Derek: TUM CSV -> /global_path -> Nav2 vector pursuit -> /nav2_cmd_ackermann (mux priority 50).
+            # Derek: TUM CSV -> nav_msgs/Path on /global_path (team-tested CSV->topic conversion).
             Node(
                 package="reactive_control",
                 executable="traj_csv_path_publisher",
                 name="traj_csv_path_publisher",
                 output="screen",
-                condition=nav2_pursuit_on,
+                condition=derek_path_pub_on,
                 parameters=[
                     {
                         "trajectory_csv": ParameterValue(LaunchConfiguration("raceline_csv"), value_type=str),
@@ -226,7 +250,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(nav2_vector_launch),
-                condition=nav2_pursuit_on,
+                condition=derek_nav2_on,
                 launch_arguments={
                     "publish_map_odom_identity": "true",
                     "ackermann_topic": "/nav2_cmd_ackermann",

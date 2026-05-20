@@ -404,20 +404,30 @@ docker cp ~/raceline_data/outputs/traj_race_cl.csv \
   roboracer_raceline:/race_ws/racelines/traj_race_cl.csv
 ```
 
-The last **`docker cp`** places the trajectory at the default **`raceline_pure_pursuit`** path (**`/race_ws/racelines/traj_race_cl.csv`**).
+The last **`docker cp`** places the trajectory at **`/race_ws/racelines/traj_race_cl.csv`** (default for Derek’s path publisher).
 
-**C. Drive with pure pursuit.** Launch bringup with pursuit instead of wall-follow (after **`source install/setup.bash`**):
+**C. Publish raceline on ROS (team-tested).** Derek/Ricky tested **CSV → `/global_path`** only:
 
 ```bash
-ros2 launch /race_ws/bringup.launch.py autonomy:=raceline_pure_pursuit \
-  raceline_csv:=/race_ws/racelines/traj_race_cl.csv
+ros2 launch /race_ws/bringup.launch.py autonomy:=raceline_path \
+  raceline_csv:=/race_ws/racelines/traj_race_cl.csv \
+  pursuit_world_frame:=map
+ros2 topic echo /global_path --once
 ```
 
-**`raceline_pure_pursuit_node`** publishes **`AckermannDriveStamped`** on **`/drive`** ( **`ackermann_mux`** **navigation**). Tune **`lookahead_m`**, **`target_speed_mps`**, **`wheelbase_m`** in **`bringup.launch.py`**.
+**C2. Full Nav2 follow (when path looks good).** Adds vector pursuit on that path → **`/nav2_cmd_ackermann`**:
 
-**D. Frames.** The track is in the same planar frame used to build it (often **`map`**, matching **`manual_map_logger`** if it came from the logger path). **`map`→`base_link`** must be meaningful when you engage pursuit; adjust **`world_frame`** if everything is purely in **`odom`**.
+```bash
+ros2 launch /race_ws/bringup.launch.py autonomy:=raceline \
+  raceline_csv:=/race_ws/racelines/traj_race_cl.csv \
+  pursuit_world_frame:=map
+```
 
-**E. Overrides.** **`/teleop`** stays higher priority than **`/drive`** in **`config/ackermann_mux_topics.yaml`** for manual safety.
+See **`docs/AUTONOMY_MODES.md`**. Experimental: **`autonomy:=raceline_pure_pursuit`** (geometric pursuit on **`/drive`**, not team-tested on UCSD-Blue).
+
+**D. Frames.** The track is in the same planar frame used to build it (often **`map`**, matching **`manual_map_logger`** if it came from the logger path). **`map`→`base_link`** must be meaningful when you engage pursuit; set **`pursuit_world_frame`** to match.
+
+**E. Overrides.** **`/teleop`** stays higher priority than autonomy in **`config/ackermann_mux_topics.yaml`** (`/drive`, `/nav2_cmd_ackermann`).
 
 Then (alternative only): **`docker/raceline.dockerfile`** workflows copy any **`<name>.csv`** into **`inputs/tracks/`**, set **`file_paths["track_name"]`** to **`<name>`**, **`python main_globaltraj.py`**, default **`outputs/traj_race_cl.csv`** — see **`scripts/raceline_run.sh`** + **`DATA_DIR`**.
 
