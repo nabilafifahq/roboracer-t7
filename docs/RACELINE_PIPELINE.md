@@ -95,6 +95,7 @@ See **`docs/AUTONOMY_MODES.md`**.
 ## Rebuild image after git pull
 
 ```bash
-docker build -f docker/dockerfile -t nabilafifahq/roboracer-t7:main-latest .
-docker push nabilafifahq/roboracer-t7:main-latest
+./scripts/docker_build_full_stack.sh
+# Pi from Mac: PLATFORM=linux/arm64 ./scripts/docker_build_full_stack.sh
+docker pull nabilafifahq/roboracer-t7:full-stack
 ```

@@ -60,7 +60,8 @@ root@UCSD-Blue:~#
 
 From repo root on the car host, run these scripts for faster workflow.
 
-- To start the docker container: `./scripts/car_run.sh`
+- **Build + push combined image:** `./scripts/docker_build_full_stack.sh` → tag `nabilafifahq/roboracer-t7:full-stack`
+- To start the docker container: `./scripts/car_run.sh` (defaults to `full-stack` image)
 - To check the container status: `./scripts/car_status.sh`
 - To open sourced shell in running docker container: `./scripts/car_exec.sh`
 - To launch unified stack for autodrive: `./scripts/car_launch.sh`

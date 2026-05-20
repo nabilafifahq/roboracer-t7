@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="${CONTAINER_NAME:-roboracer_t7}"
-IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:main-latest}"
+IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:full-stack}"
 LAUNCH_FILE="${LAUNCH_FILE:-/race_ws/bringup.launch.py}"
 # Optional extra args after the launch file, e.g.
 # EXTRA_LAUNCH_ARGS='autonomy:=raceline_path raceline_csv:=/race_ws/racelines/traj_race_cl.csv'

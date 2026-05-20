@@ -96,37 +96,44 @@ docker buildx build --platform linux/arm64 \
 
 ---
 
-## 2d) Full stack + manual map / SLAM (`manual-logger`)
+## 2d) **Full-stack** image (`full-stack` tag) — use this on the car
 
-Same **`docker/dockerfile`** as everything else (Cyclone **`ENV`**, **`ros-humble-rmw-cyclonedds-cpp`**, **`ros-humble-slam-toolbox`**, EKF, **`bringup.launch.py`** with **`use_slam`**, **`config/slam_toolbox_mapper_online_async.yaml`**, **`reactive_control`** / **`manual_map_logger`**, vesc patch, Livox, preflight script).
+One image for the **combined** branch: Cyclone DDS, EKF, SLAM, joy sign fix, VESC patch, manual map logger, TUM optimizer source, **Derek** `traj_csv_path_publisher` + Nav2 vector pursuit, geometric pursuit (optional), unified **`bringup.launch.py`**.
 
-**Build and push (x86 builder → Hub; Pi pulls):**
+**Tag:** `nabilafifahq/roboracer-t7:full-stack`  
+Build from branch **`feat/manual-map-ekf-pursuit`** (or `main` after merge).
+
+**Build and push (helper script):**
 
 ```bash
 cd /path/to/roboracer-t7
-docker build --no-cache -t nabilafifahq/roboracer-t7:manual-logger -f docker/dockerfile .
-docker push nabilafifahq/roboracer-t7:manual-logger
+git checkout feat/manual-map-ekf-pursuit   # or main after PR merge
+./scripts/docker_build_full_stack.sh
 ```
 
-**Build for Raspberry Pi ARM64 from a Mac/CI (push only, no `--load`):**
+**Raspberry Pi (ARM64) from Mac — push only:**
 
 ```bash
-docker buildx build --platform linux/arm64 \
-  -t nabilafifahq/roboracer-t7:manual-logger \
-  -f docker/dockerfile --push .
+PLATFORM=linux/arm64 ./scripts/docker_build_full_stack.sh
+```
+
+**Manual equivalent:**
+
+```bash
+docker build -f docker/dockerfile -t nabilafifahq/roboracer-t7:full-stack .
+docker push nabilafifahq/roboracer-t7:full-stack
 ```
 
 **On the car:**
 
 ```bash
 docker rm -f roboracer_t7 2>/dev/null || true
-docker pull nabilafifahq/roboracer-t7:manual-logger
-export IMAGE=nabilafifahq/roboracer-t7:manual-logger
-docker run --rm -it --name roboracer_t7 --net=host --ipc=host --privileged \
-  --device=/dev/input/js0 --device=/dev/ttyACM0 --device=/dev/ttyACM1 \
-  -v /dev/sensors:/dev/sensors -v /dev/bus/usb:/dev/bus/usb \
-  "$IMAGE"
+docker pull nabilafifahq/roboracer-t7:full-stack
+export IMAGE=nabilafifahq/roboracer-t7:full-stack
+./scripts/car_run.sh
 ```
+
+Legacy tags (`main-latest`, `manual-logger`) are older; do not use for the merged Derek + EKF/SLAM stack.
 
 Inside the container you should **not** need `apt-get install ros-humble-rmw-cyclonedds-cpp` anymore; Cyclone is in the image. Optional check:
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:main-latest}"
+IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:full-stack}"
 CONTAINER_NAME="${CONTAINER_NAME:-roboracer_t7}"
 LIVOX_MID360_CONFIG_PATH="${LIVOX_MID360_CONFIG_PATH:-}"
 

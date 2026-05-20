@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="${CONTAINER_NAME:-roboracer_t7}"
-IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:main-latest}"
+IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:full-stack}"
 
 echo "=== Docker status for RoboRacer ==="
 echo "Container name target: ${CONTAINER_NAME}"
