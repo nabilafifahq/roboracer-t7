@@ -1,4 +1,10 @@
 repositories:
+  # Nav2 controller plugin: vector pursuit (see roboracer_nav2_vector_pursuit launch).
+  vector_pursuit_controller:
+    type: git
+    url: https://github.com/blackcoffeerobotics/vector_pursuit_controller.git
+    version: master
+
   # system (includes ackermann_mux, vesc, teleop_tools)
   f1tenth_system:
     type: git

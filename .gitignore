@@ -1,2 +1,9 @@
 external_audit/
 src/fusion/
+__pycache__/
+*.py[cod]
+.DS_Store
+test_manual_map_logger/_plots/
+test_manual_map_logger/*.csv
+!racelines/
+!raceline_data/inputs/tracks/*.csv

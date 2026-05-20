@@ -166,17 +166,15 @@ printenv | grep -E '^ROS_DISTRO='
 Inside container:
 
 ```bash
-mkdir -p /dev/sensors
-if [ -e /dev/ttyACM1 ]; then
-  ln -sf /dev/ttyACM1 /dev/sensors/vesc
-else
-  ln -sf /dev/ttyACM0 /dev/sensors/vesc
-fi
+sudo mkdir -p /dev/sensors
+# UCSD-Blue: VESC = STM (ttyACM0), Arduino RC = ttyACM1 — always use ACM0 for VESC.
+sudo ln -sf /dev/ttyACM0 /dev/sensors/vesc
+# Or stable by-id: sudo ln -sf /dev/serial/by-id/usb-STMicroelectronics_* /dev/sensors/vesc
 ls -l /dev/sensors/vesc
 ```
 
 Expected:
-- `/dev/sensors/vesc` points to `/dev/ttyACM1` or `/dev/ttyACM0`
+- `/dev/sensors/vesc` points to **`/dev/ttyACM0`** (STM / ChibiOS), **not** `ttyACM1` (Arduino)
 
 ---
 

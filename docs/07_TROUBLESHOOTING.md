@@ -189,12 +189,9 @@ Symptoms:
 Fix:
 
 ```bash
-mkdir -p /dev/sensors
-if [ -e /dev/ttyACM1 ]; then
-  ln -sf /dev/ttyACM1 /dev/sensors/vesc
-else
-  ln -sf /dev/ttyACM0 /dev/sensors/vesc
-fi
+sudo mkdir -p /dev/sensors
+# UCSD-Blue: VESC = STM on ttyACM0; Arduino Leonardo = ttyACM1 (do not use for VESC).
+sudo ln -sf /dev/ttyACM0 /dev/sensors/vesc
 ls -l /dev/sensors/vesc
 ```
 

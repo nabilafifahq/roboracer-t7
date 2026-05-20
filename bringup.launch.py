@@ -5,7 +5,7 @@ from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, EqualsSubstitution
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition, OrCondition, UnlessCondition
 from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -58,11 +58,22 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
 
-    wall_follow_on = UnlessCondition(
+    raceline_pursuit_on = IfCondition(
         EqualsSubstitution(autonomy, "raceline_pure_pursuit"),
     )
-    pursuit_on = IfCondition(
-        EqualsSubstitution(autonomy, "raceline_pure_pursuit"),
+    nav2_pursuit_on = IfCondition(
+        EqualsSubstitution(autonomy, "nav2_vector_pursuit"),
+    )
+    wall_follow_on = UnlessCondition(
+        OrCondition(
+            EqualsSubstitution(autonomy, "raceline_pure_pursuit"),
+            EqualsSubstitution(autonomy, "nav2_vector_pursuit"),
+        )
+    )
+    nav2_vector_launch = os.path.join(
+        get_package_share_directory("roboracer_nav2_vector_pursuit"),
+        "launch",
+        "vector_pursuit_nav2_follow_global_path.launch.py",
     )
 
     return LaunchDescription(
@@ -70,7 +81,10 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "autonomy",
                 default_value="wall_follow",
-                description="'wall_follow' (default) or 'raceline_pure_pursuit' (TUM CSV + geometric pure pursuit on /drive).",
+                description=(
+                    "'wall_follow' (default), 'raceline_pure_pursuit' (TUM CSV + geometric pursuit on /drive), "
+                    "or 'nav2_vector_pursuit' (Derek: Nav2 vector pursuit + /global_path from CSV)."
+                ),
             ),
             DeclareLaunchArgument(
                 "raceline_csv",
@@ -180,7 +194,7 @@ def generate_launch_description() -> LaunchDescription:
                 executable="raceline_pure_pursuit_node",
                 name="raceline_pure_pursuit",
                 output="screen",
-                condition=pursuit_on,
+                condition=raceline_pursuit_on,
                 parameters=[
                     {
                         "trajectory_csv": ParameterValue(LaunchConfiguration("raceline_csv"), value_type=str),
@@ -192,6 +206,31 @@ def generate_launch_description() -> LaunchDescription:
                         "robot_frame": "base_link",
                     },
                 ],
+            ),
+            # Derek: TUM CSV -> /global_path -> Nav2 vector pursuit -> /nav2_cmd_ackermann (mux priority 50).
+            Node(
+                package="reactive_control",
+                executable="traj_csv_path_publisher",
+                name="traj_csv_path_publisher",
+                output="screen",
+                condition=nav2_pursuit_on,
+                parameters=[
+                    {
+                        "trajectory_csv": ParameterValue(LaunchConfiguration("raceline_csv"), value_type=str),
+                        "path_topic": "/global_path",
+                        "frame_id": ParameterValue(pursuit_world_frame, value_type=str),
+                        "publish_hz": 1.0,
+                        "step": 1,
+                    },
+                ],
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(nav2_vector_launch),
+                condition=nav2_pursuit_on,
+                launch_arguments={
+                    "publish_map_odom_identity": "true",
+                    "ackermann_topic": "/nav2_cmd_ackermann",
+                }.items(),
             ),
         ]
     )
