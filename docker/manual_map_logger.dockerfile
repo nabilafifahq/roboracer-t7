@@ -18,6 +18,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
     ros-humble-tf2-ros \
+    ros-humble-rmw-cyclonedds-cpp \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /race_ws
@@ -35,7 +36,7 @@ RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py
 COPY docker/manual_map_logger_entrypoint.sh /manual_map_logger_entrypoint.sh
 RUN chmod +x /manual_map_logger_entrypoint.sh
 
-ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 ENTRYPOINT ["/manual_map_logger_entrypoint.sh"]
 CMD ["ros2", "run", "reactive_control", "manual_map_logger"]

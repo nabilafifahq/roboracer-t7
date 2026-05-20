@@ -77,7 +77,9 @@ docker pull ${IMAGE}
 
 ## 4) Start container
 
-Recommended helper:
+The helper scripts live **inside the git repo**. If you see `No such file or directory`, you are not in that directory (for example you are in `~` only). Either `cd` to your clone first, or call the script by absolute path, e.g. `~/roboracer-t7/scripts/car_run.sh`.
+
+Recommended helper (**from repo root**, or adjust the path):
 
 ```bash
 ./scripts/car_run.sh

@@ -68,6 +68,77 @@ docker buildx build --platform linux/arm64 \
 
 ---
 
+## 2c) Hallway / manual_map_logger test image (`hallway-test`)
+
+Build and push the stack image used for hallway logging and TF/EKF checks:
+
+```bash
+# From repo root (same Dockerfile as main-latest)
+docker build -t nabilafifahq/roboracer-t7:hallway-test -f docker/dockerfile .
+docker push nabilafifahq/roboracer-t7:hallway-test
+```
+
+On the car, pull and run with that tag (override the default `main-latest`):
+
+```bash
+export IMAGE=nabilafifahq/roboracer-t7:hallway-test
+docker pull "$IMAGE"
+./scripts/car_launch.sh   # or car_run.sh / car_exec.sh — they honor $IMAGE
+```
+
+For **ARM64** (Raspberry Pi) from a desktop, use `buildx` and the same tag:
+
+```bash
+docker buildx build --platform linux/arm64 \
+  -t nabilafifahq/roboracer-t7:hallway-test \
+  -f docker/dockerfile --push .
+```
+
+---
+
+## 2d) Full stack + manual map / SLAM (`manual-logger`)
+
+Same **`docker/dockerfile`** as everything else (Cyclone **`ENV`**, **`ros-humble-rmw-cyclonedds-cpp`**, **`ros-humble-slam-toolbox`**, EKF, **`bringup.launch.py`** with **`use_slam`**, **`config/slam_toolbox_mapper_online_async.yaml`**, **`reactive_control`** / **`manual_map_logger`**, vesc patch, Livox, preflight script).
+
+**Build and push (x86 builder → Hub; Pi pulls):**
+
+```bash
+cd /path/to/roboracer-t7
+docker build --no-cache -t nabilafifahq/roboracer-t7:manual-logger -f docker/dockerfile .
+docker push nabilafifahq/roboracer-t7:manual-logger
+```
+
+**Build for Raspberry Pi ARM64 from a Mac/CI (push only, no `--load`):**
+
+```bash
+docker buildx build --platform linux/arm64 \
+  -t nabilafifahq/roboracer-t7:manual-logger \
+  -f docker/dockerfile --push .
+```
+
+**On the car:**
+
+```bash
+docker rm -f roboracer_t7 2>/dev/null || true
+docker pull nabilafifahq/roboracer-t7:manual-logger
+export IMAGE=nabilafifahq/roboracer-t7:manual-logger
+docker run --rm -it --name roboracer_t7 --net=host --ipc=host --privileged \
+  --device=/dev/input/js0 --device=/dev/ttyACM0 --device=/dev/ttyACM1 \
+  -v /dev/sensors:/dev/sensors -v /dev/bus/usb:/dev/bus/usb \
+  "$IMAGE"
+```
+
+Inside the container you should **not** need `apt-get install ros-humble-rmw-cyclonedds-cpp` anymore; Cyclone is in the image. Optional check:
+
+```bash
+printenv RMW_IMPLEMENTATION
+ldconfig -p | grep -i cyclonedds | head
+dpkg -l | grep -E 'slam-toolbox|rmw-cyclonedds'
+grep -n slam_toolbox /race_ws/bringup.launch.py | head
+```
+
+---
+
 ## 3) Tag for Docker Hub
 
 ```bash

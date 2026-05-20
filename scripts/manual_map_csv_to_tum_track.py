@@ -2,10 +2,14 @@
 """
 Convert reactive_control manual_map_logger CSV -> TUM global_racetrajectory_optimization track CSV.
 
+Use this when the CSV is *not* already TUM-shaped. If the file already has columns
+  x_m, y_m, w_tr_right_m, w_tr_left_m
+(and you only renamed it e.g. hallway.csv), skip conversion and copy straight to inputs/tracks/.
+
 TUM import_track.py expects comma-separated rows (header optional only if first line is '#' comment):
   x_m, y_m, w_tr_right_m, w_tr_left_m
 
-manual_map columns used:
+Logger columns expected by this script (see also older runs with different headers in docs):
   x, y, right_wall_m -> w_tr_right_m, left_wall_m -> w_tr_left_m
 
 References:
@@ -36,7 +40,14 @@ def main() -> int:
         "--output",
         type=Path,
         required=True,
-        help="Output path, e.g. raceline_data/inputs/tracks/hallway.csv",
+        help="Output path, e.g. raceline_data/inputs/tracks/from_manual_map.csv",
+    )
+    ap.add_argument(
+        "--drop-first",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Drop first N valid rows after filtering (use 1 to remove SLAM startup pose snap)",
     )
     ap.add_argument(
         "--step",
@@ -94,6 +105,13 @@ def main() -> int:
 
     if not rows_out:
         print("ERROR: no valid rows (need finite x,y and both wall distances)", file=sys.stderr)
+        return 1
+
+    drop = max(0, args.drop_first)
+    if drop:
+        rows_out = rows_out[drop:]
+    if not rows_out:
+        print("ERROR: no rows left after --drop-first", file=sys.stderr)
         return 1
 
     thinned: list[tuple[float, float, float, float]] = rows_out[:: args.step]

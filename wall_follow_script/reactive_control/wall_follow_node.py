@@ -4,7 +4,12 @@ import rclpy
 from ackermann_msgs.msg import AckermannDriveStamped
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+)
 
 # Lab constants
 THETA_DEG = 60
@@ -43,15 +48,21 @@ class WallFollowNode(Node):
     def __init__(self):
         super().__init__("wall_follow_node")
 
-        self.create_subscription(LaserScan, "/scan", self.lidar_callback, 10)
+        scan_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
+        )
+        self.create_subscription(LaserScan, "/scan", self.lidar_callback, scan_qos)
 
-        qos = QoSProfile(
+        drive_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=10,
             reliability=ReliabilityPolicy.BEST_EFFORT,
         )
 
-        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", qos)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", drive_qos)
 
         self.last_time = None
         self.last_steering = 0.0
@@ -71,7 +82,9 @@ class WallFollowNode(Node):
         a = angle_to_distance(theta_a, lidar_range_array, angle_min, angle_increment)
         b = angle_to_distance(theta_b, lidar_range_array, angle_min, angle_increment)
 
-        if not is_valid_lidar_scan(a) or not is_valid_lidar_scan(b):
+        if not is_valid_lidar_scan(a, scan.range_min, scan.range_max) or not is_valid_lidar_scan(
+            b, scan.range_min, scan.range_max
+        ):
             self.get_logger().warn("Invalid lidar scan, repeating last command")
             self.send_control_command(throttle, self.last_steering)
             return

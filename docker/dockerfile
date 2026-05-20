@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
 	python3-vcstool \
 	python3-colcon-common-extensions \
 	libpcl-dev \
+	ros-humble-rmw-cyclonedds-cpp \
+	ros-humble-robot-localization \
 	ros-humble-cv-bridge \
 	ros-humble-vision-opencv \
 	ros-humble-depthai-ros \
@@ -19,6 +21,8 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-rviz2 \
 	ros-humble-rviz-imu-plugin \
 	ros-humble-pointcloud-to-laserscan \
+	ros-humble-tf2-ros \
+	ros-humble-slam-toolbox \
 	libusb-1.0-0-dev \
 	git \
 	build-essential \
@@ -30,18 +34,26 @@ RUN apt-get update && apt-get install -y \
 	lm-sensors \
 	&& rm -rf /var/lib/apt/lists/*
 
+# Default middleware for all ROS 2 processes (including `docker exec bash` when ENV is inherited).
+# entrypoint.sh also sets this; Cyclone avoids Fast DDS SHM issues in Docker.
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
 # 2. SETUP WORKSPACE
 WORKDIR /race_ws
 COPY docker/racer.repos .
 COPY docker/config/pointcloud_to_laserscan_indoor.yaml /race_ws/config/pointcloud_to_laserscan_indoor.yaml
+COPY config/ekf_car.yaml /race_ws/config/ekf_car.yaml
 COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
 COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
+COPY config/slam_toolbox_mapper_online_async.yaml /race_ws/config/slam_toolbox_mapper_online_async.yaml
 COPY bringup.launch.py /race_ws/bringup.launch.py
 COPY scripts/ /race_ws/scripts/
+RUN chmod +x /race_ws/scripts/preflight_manual_map_logger.sh
 COPY docker/patch_tum_main_globaltraj_ros.py /tmp/patch_tum_main_globaltraj_ros.py
 COPY docker/patch_vesc_yaml.py /tmp/patch_vesc_yaml.py
 RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py
-RUN mkdir -p /race_ws/bags /race_ws/racelines
+RUN mkdir -p /race_ws/bags /race_ws/racelines /race_ws/logs
+COPY racelines/traj_race_cl.csv /race_ws/racelines/traj_race_cl.csv
 
 # 3. Download repos
 RUN mkdir -p src
@@ -153,6 +165,18 @@ RUN set -euxo pipefail; \
 # 4. BUILD THE SYSTEM
 RUN source /opt/ros/humble/setup.sh && \
 	colcon build --symlink-install --parallel-workers 1
+
+# Fail build if vesc_to_odom is not configured to stop publishing odom->base_link (EKF must own it).
+RUN set -euxo pipefail; \
+	vesc="$(find /race_ws/install -path '*/share/*/config/vesc.yaml' -print -quit)"; \
+	test -n "$vesc"; \
+	grep -A40 "vesc_to_odom_node:" "$vesc" | grep -q "publish_tf: false" || { echo "ERROR: vesc_to_odom_node missing publish_tf: false in $vesc" >&2; grep -n "publish_tf" "$vesc" || true; exit 1; }; \
+	echo "OK: vesc_to_odom publish_tf false verified in $vesc"
+
+# Interactive `docker exec -it ... bash` does not run ENTRYPOINT; still default to Cyclone.
+RUN printf '%s\n' \
+	'export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"' \
+	>> /root/.bashrc
 
 # 5. SETUP ENTRYPOINT
 COPY docker/entrypoint.sh /entrypoint.sh

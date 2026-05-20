@@ -8,7 +8,9 @@ import math
 from pathlib import Path
 
 import rclpy
+from rclpy.duration import Duration
 from rclpy.node import Node
+from rclpy.time import Time
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import LaserScan
 from tf2_ros import Buffer, TransformListener
@@ -67,7 +69,8 @@ class ManualMapLogger(Node):
         self._left_a0, self._left_a1 = float(lw[0]), float(lw[1])
         self._right_a0, self._right_a1 = float(rw[0]), float(rw[1])
 
-        self._tf_buffer = Buffer(cache_time=rclpy.duration.Duration(seconds=10.0))
+        # SLAM map->odom can be sparse; keep enough history for Time(0) "latest" lookups.
+        self._tf_buffer = Buffer(cache_time=rclpy.duration.Duration(seconds=30.0))
         self._tf_listener = TransformListener(self._tf_buffer, self)
 
         scan_qos = QoSProfile(
@@ -108,20 +111,41 @@ class ManualMapLogger(Node):
             pass
         return super().destroy_node()
 
+    def _lookup_world_to_robot_tf(self):
+        """Latest ``world``→``robot`` transform (tf2 ``Time(0)`` = newest in buffer).
+
+        Do **not** fall back to ``get_clock().now()`` for ``map`` + SLAM: SLAM stamps are often
+        *ahead* of the first samples (``extrapolation into the past``) or the chain can lag
+        ``now`` (``extrapolation into the future``). ``Time(0)`` avoids both for the usual case.
+        If this fails, skip the row; the next timer tick retries (cheap, non-blocking).
+        """
+        return self._tf_buffer.lookup_transform(
+            self._world,
+            self._robot,
+            Time(seconds=0, nanoseconds=0),
+            timeout=Duration(seconds=0.25),
+        )
+
     def _scan_cb(self, msg: LaserScan) -> None:
-        self._last_scan = msg
+        # Do not retain the loaned rclpy message past this callback (large /scan can crash
+        # rclpy.spin with "Unable to convert call argument to Python object").
+        snap = LaserScan()
+        snap.header.stamp.sec = int(msg.header.stamp.sec)
+        snap.header.stamp.nanosec = int(msg.header.stamp.nanosec)
+        snap.header.frame_id = str(msg.header.frame_id)
+        snap.angle_min = float(msg.angle_min)
+        snap.angle_increment = float(msg.angle_increment)
+        snap.range_min = float(msg.range_min)
+        snap.range_max = float(msg.range_max)
+        snap.ranges = list(msg.ranges)
+        self._last_scan = snap
 
     def _tick(self) -> None:
         scan = self._last_scan
         if scan is None:
             return
         try:
-            t = self._tf_buffer.lookup_transform(
-                self._world,
-                self._robot,
-                rclpy.time.Time(),
-                timeout=rclpy.duration.Duration(seconds=0.15),
-            )
+            t = self._lookup_world_to_robot_tf()
         except Exception as e:
             self.get_logger().warn(f"TF lookup {self._world}->{self._robot} failed: {e}", throttle_duration_sec=2.0)
             return
@@ -176,7 +200,8 @@ def main(args: list[str] | None = None) -> None:
     node = ManualMapLogger()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, RuntimeError):
+        # RuntimeError: rare rclpy/pybind edge cases on shutdown with large LaserScan.
         pass
     finally:
         try:
