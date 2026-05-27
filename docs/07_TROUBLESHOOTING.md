@@ -139,9 +139,13 @@ Fix:
 Symptom:
 - warning about incompatible QoS (`RELIABILITY`)
 - `/scan` has no usable stream in autonomy node
+- `ros2 topic info /scan` shows **Publisher count: 1** but `ros2 topic echo /scan --qos-profile sensor_data --once` **times out**
+- `/livox/lidar` is healthy (~10 Hz) and `pointcloud_to_laserscan` is listed as a subscriber, but **Livox RELIABLE** vs **cloud_in BEST_EFFORT** (no PointCloud2 delivered)
 
 Fix:
 - Keep `/scan` subscriber on `BEST_EFFORT` + `VOLATILE` in `wall_follow_node`.
+- In `/race_ws/config/pointcloud_to_laserscan_indoor.yaml`, set **`qos_overrides./livox/lidar.subscription.reliability: reliable`** (see repo `docker/config/pointcloud_to_laserscan_indoor.yaml`), **one** yaml block, **`target_frame: laser`**, then restart bringup.
+- On car, remove **duplicate** `pointcloud_to_laserscan:` blocks in that file (duplicates can leave `target_frame: base_link` active).
 
 Verify bridge path clearly:
 

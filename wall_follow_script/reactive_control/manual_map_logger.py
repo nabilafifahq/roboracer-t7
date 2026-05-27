@@ -11,7 +11,7 @@ import rclpy
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.time import Time
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from tf2_ros import Buffer, TransformListener
 
@@ -73,14 +73,11 @@ class ManualMapLogger(Node):
         self._tf_buffer = Buffer(cache_time=rclpy.duration.Duration(seconds=30.0))
         self._tf_listener = TransformListener(self._tf_buffer, self)
 
-        scan_qos = QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-        )
-        self.create_subscription(LaserScan, self._scan_topic, self._scan_cb, scan_qos)
+        # Match pointcloud_to_laserscan / wall_follow (sensor QoS, best effort).
+        self.create_subscription(LaserScan, self._scan_topic, self._scan_cb, qos_profile_sensor_data)
         self._last_scan: LaserScan | None = None
+        self._got_scan = False
+        self._rows_written = 0
 
         self._file = open(self._csv_path, "w", newline="", encoding="utf-8")
         self._writer = csv.writer(self._file)
@@ -100,15 +97,41 @@ class ManualMapLogger(Node):
         self._file.flush()
 
         self.create_timer(self._period, self._tick)
+        self._preflight_done = False
+        self.create_timer(5.0, self._preflight_tf_check)
         self.get_logger().info(
             f"Logging TF {self._world}->{self._robot} + {self._scan_topic} to {self._csv_path} at {1.0/self._period:.1f} Hz"
         )
+
+    def _preflight_tf_check(self) -> None:
+        if self._preflight_done or self._rows_written > 0:
+            return
+        self._preflight_done = True
+        try:
+            self._lookup_world_to_robot_tf()
+        except Exception as e:
+            self.get_logger().error(
+                f"No rows yet: TF {self._world}->{self._robot} unavailable ({e}). "
+                f"With SLAM, wait until `ros2 run tf2_ros tf2_echo map base_link` works, "
+                f"or use -p world_frame:=odom if not using map."
+            )
+        elif self._last_scan is None:
+            self.get_logger().error(
+                f"No rows yet: waiting for {self._scan_topic}. Check `ros2 topic hz {self._scan_topic}`."
+            )
 
     def destroy_node(self) -> bool:
         try:
             self._file.close()
         except OSError:
             pass
+        if self._rows_written == 0:
+            self.get_logger().error(
+                f"Wrote 0 data rows to {self._csv_path} (header only). "
+                f"Need TF {self._world}->{self._robot} and {self._scan_topic}."
+            )
+        else:
+            self.get_logger().info(f"Wrote {self._rows_written} rows to {self._csv_path}")
         return super().destroy_node()
 
     def _lookup_world_to_robot_tf(self):
@@ -139,10 +162,19 @@ class ManualMapLogger(Node):
         snap.range_max = float(msg.range_max)
         snap.ranges = list(msg.ranges)
         self._last_scan = snap
+        if not self._got_scan:
+            self._got_scan = True
+            n = len(snap.ranges)
+            self.get_logger().info(f"First {self._scan_topic} received ({n} ranges)")
 
     def _tick(self) -> None:
         scan = self._last_scan
         if scan is None:
+            self.get_logger().warn(
+                f"No {self._scan_topic} yet — logger cannot write rows. "
+                f"Run: ros2 topic hz {self._scan_topic}  and  ros2 topic info {self._scan_topic} -v",
+                throttle_duration_sec=3.0,
+            )
             return
         try:
             t = self._lookup_world_to_robot_tf()
@@ -192,6 +224,7 @@ class ManualMapLogger(Node):
                 f"{scan_sec:.6f}",
             ]
         )
+        self._rows_written += 1
         self._file.flush()
 
 

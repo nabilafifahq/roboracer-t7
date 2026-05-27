@@ -4,21 +4,21 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, EqualsSubstitution
-from launch.conditions import IfCondition, OrCondition, UnlessCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, EqualsSubstitution, PythonExpression
+from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
 
 
-def _autonomy_one_of(autonomy: LaunchConfiguration, *modes: str):
-    """True when launch arg autonomy equals any of modes."""
+def _autonomy_one_of(autonomy: LaunchConfiguration, *modes: str) -> PythonExpression:
+    """Python expression true when launch arg autonomy equals any of modes (Humble-safe; no OrCondition)."""
     if len(modes) == 1:
-        return EqualsSubstitution(autonomy, modes[0])
-    cond = EqualsSubstitution(autonomy, modes[0])
+        return PythonExpression(["'", autonomy, "' == '", modes[0], "'"])
+    parts = ["'", autonomy, "' == '", modes[0], "'"]
     for mode in modes[1:]:
-        cond = OrCondition(cond, EqualsSubstitution(autonomy, mode))
-    return cond
+        parts.extend([" or '", autonomy, "' == '", mode, "'"])
+    return PythonExpression(parts)
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -77,9 +77,13 @@ def generate_launch_description() -> LaunchDescription:
         _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit")
     )
     derek_path_pub_on = IfCondition(
-        OrCondition(
-            _autonomy_one_of(autonomy, "raceline_path", "csv_path"),
-            _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit"),
+        _autonomy_one_of(
+            autonomy,
+            "raceline_path",
+            "csv_path",
+            "raceline",
+            "nav2_vector_pursuit",
+            "pure_pursuit",
         )
     )
     # Nabila geometric pursuit on /drive (experimental; not team-tested on UCSD-Blue).
@@ -87,10 +91,15 @@ def generate_launch_description() -> LaunchDescription:
         _autonomy_one_of(autonomy, "raceline_pure_pursuit", "raceline_geometric")
     )
     wall_follow_on = UnlessCondition(
-        OrCondition(
-            _autonomy_one_of(autonomy, "raceline_path", "csv_path"),
-            _autonomy_one_of(autonomy, "raceline", "nav2_vector_pursuit", "pure_pursuit"),
-            _autonomy_one_of(autonomy, "raceline_pure_pursuit", "raceline_geometric"),
+        _autonomy_one_of(
+            autonomy,
+            "raceline_path",
+            "csv_path",
+            "raceline",
+            "nav2_vector_pursuit",
+            "pure_pursuit",
+            "raceline_pure_pursuit",
+            "raceline_geometric",
         )
     )
     nav2_vector_launch = os.path.join(
@@ -202,7 +211,7 @@ def generate_launch_description() -> LaunchDescription:
                         "target_speed_mps": 0.1,
                         "min_speed_mps": 0.0,
                         "max_speed_mps": 0.12,
-                        "max_steering_angle_rad": 0.22,
+                        "max_steering_angle_rad": 0.70,
                         "manual_override_latch": True,
                         "front_obstacle_distance_m": 1.0,
                         "side_obstacle_distance_m": 0.9,
@@ -225,7 +234,7 @@ def generate_launch_description() -> LaunchDescription:
                         "lookahead_m": 0.55,
                         "wheelbase_m": 0.33,
                         "target_speed_mps": 0.12,
-                        "max_steering_rad": 0.28,
+                        "max_steering_rad": 0.70,
                         "world_frame": ParameterValue(pursuit_world_frame, value_type=str),
                         "robot_frame": "base_link",
                     },

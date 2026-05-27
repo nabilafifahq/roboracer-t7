@@ -90,7 +90,7 @@ class RacelinePurePursuit(Node):
         self.declare_parameter("target_speed_mps", 0.12)
         self.declare_parameter("use_traj_velocity", False)
         self.declare_parameter("traj_velocity_scale", 0.35)
-        self.declare_parameter("max_steering_rad", 0.28)
+        self.declare_parameter("max_steering_rad", 0.70)
         self.declare_parameter("min_speed_mps", 0.05)
         self.declare_parameter("control_hz", 20.0)
         self.declare_parameter("stop_within_m", 0.35)

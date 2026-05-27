@@ -17,7 +17,7 @@ class TwistToAckermann(Node):
         self.declare_parameter("cmd_vel_topic", "/cmd_vel")
         self.declare_parameter("ackermann_topic", "/nav2_cmd_ackermann")
         self.declare_parameter("wheelbase_m", 0.325)
-        self.declare_parameter("max_steering_angle_rad", 0.42)
+        self.declare_parameter("max_steering_angle_rad", 0.70)
         self.declare_parameter("min_linear_speed", 0.02)
 
         cmd_topic = str(self.get_parameter("cmd_vel_topic").value)

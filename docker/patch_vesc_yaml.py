@@ -37,6 +37,11 @@ from pathlib import Path
 TARGET = Path("/race_ws/src/f1tenth_system/f1tenth_stack/config/vesc.yaml")
 GAIN = 4614.0  # magnitude; sign is set per-node below.
 
+# More servo travel per steering radian (keep offset 0.5304 — team center trim).
+STEER_GAIN_DEFAULT = -1.2135
+STEER_GAIN_T7 = -1.55
+STEER_GAIN_MARKER = "# T7: increased steering_angle_to_servo_gain for tighter turns"
+
 # Anchor we expect to find inside the upstream `vesc_to_odom_node:` block.
 NEEDLE = """vesc_to_odom_node:
   ros__parameters:
@@ -61,30 +66,49 @@ def main() -> None:
 
     text = TARGET.read_text(encoding="utf-8")
 
-    if INJECT in text:
-        print(f"vesc.yaml already patched ({TARGET})")
-        return
+    if INJECT not in text:
+        # Older images: gain override present but publish_tf not yet — append once.
+        legacy_tail = f"    speed_to_erpm_gain: -{GAIN}\n    odom_frame: odom\n"
+        if legacy_tail in text and "publish_tf: false" not in text:
+            text = text.replace(
+                legacy_tail,
+                legacy_tail
+                + "    # robot_localization EKF publishes odom->base_link; avoid duplicate TF.\n    publish_tf: false\n",
+                1,
+            )
+            TARGET.write_text(text, encoding="utf-8")
+            print(f"Added publish_tf: false to vesc_to_odom_node in {TARGET}")
+        elif NEEDLE not in text:
+            raise SystemExit(
+                "vesc.yaml structure unexpected; could not find anchor block:\n"
+                f"{NEEDLE}\nUpdate docker/patch_vesc_yaml.py to match upstream."
+            )
+        else:
+            TARGET.write_text(text.replace(NEEDLE, INJECT), encoding="utf-8")
+            print(f"Patched vesc_to_odom_node in {TARGET}")
+    else:
+        print(f"vesc_to_odom odom patch already present ({TARGET})")
 
-    # Older images: gain override present but publish_tf not yet — append once.
-    legacy_tail = f"    speed_to_erpm_gain: -{GAIN}\n    odom_frame: odom\n"
-    if legacy_tail in text and "publish_tf: false" not in text:
-        text = text.replace(
-            legacy_tail,
-            legacy_tail + "    # robot_localization EKF publishes odom->base_link; avoid duplicate TF.\n    publish_tf: false\n",
-            1,
-        )
-        TARGET.write_text(text, encoding="utf-8")
-        print(f"Added publish_tf: false to vesc_to_odom_node in {TARGET}")
-        return
+    _patch_steering_gain(TARGET.read_text(encoding="utf-8"))
 
-    if NEEDLE not in text:
+
+def _patch_steering_gain(text: str) -> None:
+    if STEER_GAIN_MARKER in text:
+        print(f"Steering gain already patched ({TARGET})")
+        return
+    old = f"steering_angle_to_servo_gain: {STEER_GAIN_DEFAULT}"
+    if old not in text:
+        if f"steering_angle_to_servo_gain: {STEER_GAIN_T7}" in text:
+            print(f"Steering gain already {STEER_GAIN_T7} ({TARGET})")
+            return
         raise SystemExit(
-            "vesc.yaml structure unexpected; could not find anchor block:\n"
-            f"{NEEDLE}\nUpdate docker/patch_vesc_yaml.py to match upstream."
+            f"Could not find `{old}` in {TARGET}; update docker/patch_vesc_yaml.py."
         )
-
-    TARGET.write_text(text.replace(NEEDLE, INJECT), encoding="utf-8")
-    print(f"Patched {TARGET}")
+    new = (
+        f"steering_angle_to_servo_gain: {STEER_GAIN_T7}  {STEER_GAIN_MARKER}\n"
+    )
+    TARGET.write_text(text.replace(old, new, 1), encoding="utf-8")
+    print(f"Steering gain {STEER_GAIN_DEFAULT} -> {STEER_GAIN_T7} in {TARGET}")
 
 
 if __name__ == "__main__":
