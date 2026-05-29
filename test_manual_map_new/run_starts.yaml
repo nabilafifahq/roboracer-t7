@@ -1,0 +1,10 @@
+# Optional per-run start (position + time). Omit a run to auto-detect first motion.
+# Example:
+# runs:
+#   manual_map_1.csv:
+#     row: 7
+#     time_sec: 1779854243.498
+#     x: 1.227861
+#     y: -0.243511
+
+runs: {}
