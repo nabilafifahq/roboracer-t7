@@ -32,4 +32,10 @@ timeout 8 ros2 topic hz /scan --window 15 || true
 echo "=== /tf publishers (summary) ==="
 ros2 topic info /tf -v 2>/dev/null | head -n 40 || true
 
+echo "=== /map (3s; only if SLAM/Cartographer running) ==="
+timeout 3 ros2 topic hz /map --window 5 2>/dev/null || echo "(no /map yet — start use_slam or use_cartographer)"
+
+echo "=== map -> base_link TF (3s sample) ==="
+timeout 3 ros2 run tf2_ros tf2_echo map base_link 2>/dev/null | head -n 12 || echo "(map->base_link not available)"
+
 echo "=== done ==="

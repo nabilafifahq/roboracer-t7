@@ -2,7 +2,9 @@
 
 `manual_map_logger` with **`world_frame:=odom`** records a **drifting local** path. That is fine for stack debug, but **not** a venue-accurate centerline for TUM `global_racetrajectory_optimization` + on-car pure pursuit at a **fixed** track.
 
-This pipeline uses **SLAM Toolbox** (optional in `bringup.launch.py`) so poses are logged in **`map`**, then the same CSV → TUM → raceline CSV flow matches **global** geometry.
+This pipeline uses **SLAM** (optional in `bringup.launch.py`) so poses are logged in **`map`**, then the same CSV → TUM → raceline CSV flow matches **global** geometry.
+
+**If SLAM Toolbox maps are too noisy**, use **`use_cartographer:=true`** instead of `use_slam:=true` (see **`docs/CARTOGRAPHER_EKF_PIPELINE.md`**). Do not enable both.
 
 ---
 
@@ -11,6 +13,7 @@ This pipeline uses **SLAM Toolbox** (optional in `bringup.launch.py`) so poses a
 | Piece | Role |
 |--------|------|
 | `use_slam:=true` on `bringup.launch.py` | Starts `slam_toolbox` **online async** mapping (`map` → `odom`; EKF still publishes `odom` → `base_link`). |
+| `use_cartographer:=true` | Starts **Cartographer** 2D instead of slam_toolbox (`map` → `odom`). |
 | `/race_ws/config/slam_toolbox_mapper_online_async.yaml` | `base_link`, `/scan`, tighter motion thresholds for slow RC mapping. |
 | `pursuit_world_frame:=map` | Derek **`traj_csv_path_publisher`** sets **`/global_path`** `frame_id` to **`map`** (use with `autonomy:=raceline_path` or `autonomy:=raceline`). |
 | `manual_map_logger` **`world_frame:=map`** | CSV **`x,y,yaw`** are in **`map`** (globally consistent while SLAM is healthy). |
@@ -23,12 +26,15 @@ When recording a **SLAM mapping** session with `ros2 bag record`, add **`/map`**
 
 ## On-vehicle procedure (quick)
 
-### 1) Bringup with SLAM
+### 1) Bringup with SLAM (Toolbox or Cartographer)
 
 ```bash
 source /opt/ros/humble/setup.bash
 source /race_ws/install/setup.bash
+# SLAM Toolbox:
 ros2 launch /race_ws/bringup.launch.py autonomy:=wall_follow use_slam:=true
+# Or Cartographer (if Toolbox maps drift/noise):
+# ros2 launch /race_ws/bringup.launch.py autonomy:=wall_follow use_cartographer:=true
 ```
 
 Wait until **`map` → `odom`** exists (SLAM lifecycle comes up; first scans may take **10–30 s**).

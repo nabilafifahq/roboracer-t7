@@ -34,6 +34,7 @@ def generate_launch_description() -> LaunchDescription:
     autonomy = LaunchConfiguration("autonomy")
     pursuit_world_frame = LaunchConfiguration("pursuit_world_frame")
     use_slam = LaunchConfiguration("use_slam")
+    use_cartographer = LaunchConfiguration("use_cartographer")
 
     # Post-race / analysis topics (extend as needed).
     bag_topics = [
@@ -55,6 +56,9 @@ def generate_launch_description() -> LaunchDescription:
         "/sensors/core",
         "/global_path",
         "/nav2_cmd_ackermann",
+        "/map",
+        "/map_metadata",
+        "/submap_list",
     ]
 
     bag_record = ExecuteProcess(
@@ -132,7 +136,18 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "use_slam",
                 default_value="false",
-                description="If true, launch slam_toolbox async mapping (publishes map->odom). Log manual_map with world_frame:=map; use pursuit_world_frame:=map when driving that raceline.",
+                description=(
+                    "If true, launch slam_toolbox (map->odom). Ignored when use_cartographer:=true. "
+                    "For Cartographer instead, use use_cartographer:=true."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "use_cartographer",
+                default_value="false",
+                description=(
+                    "If true, launch Cartographer 2D SLAM (map->odom) instead of slam_toolbox. "
+                    "EKF still runs (odom->base_link). Log manual_map with world_frame:=map."
+                ),
             ),
             DeclareLaunchArgument("record_bag", default_value="false"),
             DeclareLaunchArgument("bag_dir", default_value="/race_ws/bags"),
@@ -185,7 +200,7 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 parameters=["/race_ws/config/ekf_car.yaml"],
             ),
-            # Optional SLAM: map->odom (EKF keeps odom->base_link). For competition raceline CSV in map frame.
+            # Optional SLAM Toolbox: map->odom (disabled when use_cartographer:=true).
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
@@ -197,7 +212,22 @@ def generate_launch_description() -> LaunchDescription:
                 launch_arguments={
                     "slam_params_file": "/race_ws/config/slam_toolbox_mapper_online_async.yaml",
                 }.items(),
-                condition=IfCondition(EqualsSubstitution(use_slam, "true")),
+                condition=IfCondition(
+                    PythonExpression(
+                        [
+                            "'",
+                            use_slam,
+                            "' == 'true' and '",
+                            use_cartographer,
+                            "' != 'true'",
+                        ]
+                    )
+                ),
+            ),
+            # Optional Cartographer 2D: map->odom (preferred when slam_toolbox maps are too noisy).
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource("/race_ws/launch/cartographer_2d.launch.py"),
+                condition=IfCondition(EqualsSubstitution(use_cartographer, "true")),
             ),
             # Indoor autonomy: wall-follow (default), Derek raceline stack, or experimental geometric pursuit.
             Node(
