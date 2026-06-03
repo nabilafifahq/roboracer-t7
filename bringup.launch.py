@@ -192,6 +192,18 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 parameters=["/race_ws/config/pointcloud_to_laserscan_indoor.yaml"],
             ),
+            # Static TF base_link -> livox_frame. The Livox built-in IMU publishes /livox/imu
+            # in frame "livox_frame" (the cloud is patched to "laser", but the IMU is not).
+            # Without this, robot_localization cannot transform the IMU into base_link (it
+            # silently drops/mishandles IMU) and Cartographer warns about a missing frame.
+            # IMU is co-located with the LiDAR, so reuse the base_link->laser offset.
+            Node(
+                package="tf2_ros",
+                executable="static_transform_publisher",
+                name="static_baselink_to_livox_frame",
+                arguments=["0.27", "0", "0.11", "0", "0", "0", "base_link", "livox_frame"],
+                output="screen",
+            ),
             # Fuse wheel odometry + Livox IMU into smooth odom->base_link (vesc_to_odom publish_tf is false).
             Node(
                 package="robot_localization",

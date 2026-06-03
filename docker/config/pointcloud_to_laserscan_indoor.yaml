@@ -4,8 +4,21 @@ pointcloud_to_laserscan:
     target_frame: laser
     transform_tolerance: 0.2
 
-    min_height: -0.15
-    max_height: 0.35
+    # Height slice is measured in the LASER frame, which sits 0.11 m above base_link
+    # (static TF base_link->laser = 0.27 0 0.11). So z_laser = z_ground - 0.11.
+    #
+    # Track walls are only ~0.20 m tall (ICRA/IV indoor pipes). The wall band in the
+    # laser frame is roughly -0.11 m (floor) .. +0.09 m (wall top). The old slice
+    # (max_height 0.35 = ~0.46 m above ground) sliced WAY over the walls and picked up
+    # people / far structure / background -> SLAM noise ("lidar looking too high").
+    #
+    # Keep the slice INSIDE the wall band: above the floor, below the wall top.
+    #   min_height -0.08  -> ~0.03 m above ground (drop floor/tilt returns)
+    #   max_height  0.06  -> ~0.17 m above ground (stay under the ~0.20 m wall top)
+    # Verify on the car: `ros2 topic echo /livox/lidar --once` or bag the cloud and
+    # check the z histogram of wall hits, then nudge these two numbers.
+    min_height: -0.08
+    max_height: 0.06
 
     angle_min: -1.5708
     angle_max: 1.5708

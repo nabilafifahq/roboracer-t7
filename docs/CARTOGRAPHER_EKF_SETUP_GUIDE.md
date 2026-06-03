@@ -37,14 +37,15 @@ The **EKF** blends those into one estimate and publishes **`odom` → `base_link
 
 | File / change | Purpose |
 |---------------|---------|
-| `config/cartographer/map_builder.lua` | Cartographer map builder |
-| `config/cartographer/trajectory_builder.lua` | 2D scan matcher + motion filter (hallway tuning) |
-| `config/cartographer/roboracer_2d.lua` | Main options: frames, external EKF odom |
-| `launch/cartographer_2d.launch.py` | `cartographer_node` + occupancy grid node |
+| `config/cartographer/roboracer_2d.lua` | **Self-contained** Cartographer config: includes Cartographer's installed base `map_builder.lua`/`trajectory_builder.lua` then overrides frames (external EKF odom, `published_frame = odom`), 2D scan matcher, motion filter, loop closure. Do **not** add local `map_builder.lua`/`trajectory_builder.lua` — they shadow the required defaults and the node fails to start. |
+| `config/cartographer/roboracer_2d_localization.lua` | Pure-localization config for a saved `.pbstream` (race day). |
+| `launch/cartographer_2d.launch.py` | `cartographer_node` + occupancy grid node; optional `load_state_filename:=` for pure localization. |
+| `scripts/cartographer_save_map.sh` | Save `.pbstream` (localization) + `.pgm/.yaml` (Nav2/AMCL). |
 | `bringup.launch.py` | `use_cartographer:=true`; EKF always on; SLAM Toolbox off when Cartographer on |
 | `docker/dockerfile` | `ros-humble-cartographer`, `ros-humble-cartographer-ros` |
+| `docker/config/pointcloud_to_laserscan_indoor.yaml` | Height slice tightened to the ~0.20 m wall band (was slicing over the walls). |
 | `scripts/preflight_manual_map_logger.sh` | Checks `/map` and `map` → `base_link` |
-| `docs/CARTOGRAPHER_EKF_PIPELINE.md` | Technical pipeline doc |
+| `docs/CARTOGRAPHER_EKF_PIPELINE.md` · `docs/CARTOGRAPHER_VS_SLAMTOOLBOX_AB.md` | Technical pipeline + A/B test & mapping-quality runbook |
 
 **EKF** was already integrated (`config/ekf_car.yaml`, `ekf_node` in bringup). **Cartographer** remaps odom to **`/odometry/filtered`** (EKF output), not raw VESC `/odom`.
 
@@ -115,7 +116,7 @@ EXTRA_LAUNCH_ARGS='autonomy:=wall_follow use_cartographer:=true' ./scripts/car_l
 ### What is *not* assumed
 
 - Cartographer does **not** replace `manual_map_logger` or the TUM optimizer — it only improves **`map`** pose quality.
-- No automatic “save map and localize later” workflow is wired in bringup yet (`.pbstream` / pure localization is follow-up work).
+- Save-map-and-localize is now available: `scripts/cartographer_save_map.sh` writes `.pbstream` + `.pgm`, and `roboracer_2d_localization.lua` + `load_state_filename:=` run pure localization. See `docs/CARTOGRAPHER_VS_SLAMTOOLBOX_AB.md`.
 
 ---
 
@@ -313,7 +314,7 @@ world_frame:=map             # manual_map_logger parameter
 
 - First **~10–30 s**: `map` → `odom` may be unstable — **do not log yet**.
 - **2D height slice** can add clutter noise — tune `min_height` / `max_height` in `pointcloud_to_laserscan_indoor.yaml`.
-- **`.pbstream` save + pure localization`** is not in bringup yet — race runs currently expect **live** Cartographer (or future localization node).
+- **`.pbstream` save + pure localization** is available now (`scripts/cartographer_save_map.sh`, `roboracer_2d_localization.lua`). Race runs can use live Cartographer **or** load a saved map.
 
 ---
 
