@@ -115,7 +115,8 @@ class ManualMapLogger(Node):
                 f"With SLAM, wait until `ros2 run tf2_ros tf2_echo map base_link` works, "
                 f"or use -p world_frame:=odom if not using map."
             )
-        elif self._last_scan is None:
+            return
+        if self._last_scan is None:
             self.get_logger().error(
                 f"No rows yet: waiting for {self._scan_topic}. Check `ros2 topic hz {self._scan_topic}`."
             )

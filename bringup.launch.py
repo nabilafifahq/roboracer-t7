@@ -104,6 +104,10 @@ def generate_launch_description() -> LaunchDescription:
             "pure_pursuit",
             "raceline_pure_pursuit",
             "raceline_geometric",
+            # Mapping modes run NO onboard controller (drive manually with RC); keeps
+            # the log clean and avoids the wall_follow LiDAR-drop STOP latch during mapping.
+            "none",
+            "mapping",
         )
     )
     nav2_vector_launch = os.path.join(
