@@ -35,9 +35,12 @@ if [[ -n "${PLATFORM}" ]]; then
     docker buildx create --name "${BUILDER}" --driver docker-container --bootstrap
   fi
   docker buildx use "${BUILDER}"
+  # --provenance/--sbom false: buildkit otherwise attaches an "unknown/unknown"
+  # attestation manifest that older Docker on the Pi mis-resolves -> "exec format error".
   docker buildx build --platform "${PLATFORM}" \
     -f "${DOCKERFILE}" \
     -t "${FULL_IMAGE}" \
+    --provenance=false --sbom=false \
     --progress=plain \
     --push \
     .
@@ -46,7 +49,9 @@ if [[ -n "${PLATFORM}" ]]; then
   docker buildx imagetools inspect "${FULL_IMAGE}" 2>/dev/null | head -n 15 || true
 else
   echo "docker build (local platform)"
-  docker build -f "${DOCKERFILE}" -t "${FULL_IMAGE}" .
+  # --provenance/--sbom false: avoid the attestation manifest that makes the Pi's
+  # Docker throw "exec format error" when it mis-resolves the image index.
+  docker build --provenance=false --sbom=false -f "${DOCKERFILE}" -t "${FULL_IMAGE}" .
   echo "docker push"
   docker push "${FULL_IMAGE}"
   echo ""
