@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
 	ros-humble-pointcloud-to-laserscan \
 	ros-humble-tf2-ros \
 	ros-humble-slam-toolbox \
+	ros-humble-cartographer \
+	ros-humble-cartographer-ros \
 	ros-humble-navigation2 \
 	ros-humble-nav2-bringup \
 	libusb-1.0-0-dev \
@@ -48,6 +50,8 @@ COPY config/ekf_car.yaml /race_ws/config/ekf_car.yaml
 COPY config/ackermann_mux_topics.yaml /race_ws/config/ackermann_mux_topics.yaml
 COPY config/joy_rc_steer_fix.yaml /race_ws/config/joy_rc_steer_fix.yaml
 COPY config/slam_toolbox_mapper_online_async.yaml /race_ws/config/slam_toolbox_mapper_online_async.yaml
+COPY config/cartographer/ /race_ws/config/cartographer/
+COPY launch/cartographer_2d.launch.py /race_ws/launch/cartographer_2d.launch.py
 COPY bringup.launch.py /race_ws/bringup.launch.py
 COPY scripts/ /race_ws/scripts/
 RUN chmod +x /race_ws/scripts/preflight_manual_map_logger.sh

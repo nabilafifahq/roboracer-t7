@@ -10,7 +10,7 @@ Single coherent flow combining **your** logging/SLAM/EKF stack and **Derek’s**
 | RC teleop + deadman `buttons[1]` | `config/joy_rc_steer_fix.yaml` (`drive-speed scale: -0.50` sign fix) |
 | VESC odom sign + `publish_tf: false` | `docker/patch_vesc_yaml.py` |
 | EKF `odom`→`base_link` | `config/ekf_car.yaml` |
-| Optional SLAM `map`→`odom` | `use_slam:=true` |
+| Optional SLAM `map`→`odom` | `use_slam:=true` or `use_cartographer:=true` (see `docs/CARTOGRAPHER_EKF_PIPELINE.md`) |
 | Livox → `/scan` | bringup |
 | Mux priorities | `config/ackermann_mux_topics.yaml` (baked in image) |
 
@@ -23,7 +23,7 @@ Single coherent flow combining **your** logging/SLAM/EKF stack and **Derek’s**
 ### 1) Map the hallway (your work)
 
 ```bash
-ros2 launch /race_ws/bringup.launch.py use_slam:=true
+ros2 launch /race_ws/bringup.launch.py use_cartographer:=true
 # separate shell:
 ros2 run reactive_control manual_map_logger --ros-args -p world_frame:=map -p output_dir:=/race_ws/logs
 ```

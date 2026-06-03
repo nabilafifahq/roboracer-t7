@@ -38,7 +38,7 @@ Do not skip the manual-drive validation step before autonomy.
 - LiDAR point cloud to LaserScan bridge for autonomy.
 - Slow indoor hallway autonomy (wall-follow baseline).
 - **Raceline:** manual map → TUM optimizer → Derek CSV→`/global_path` → optional Nav2 follow (`docs/RACELINE_PIPELINE.md`).
-- EKF + optional SLAM + Cyclone DDS in Docker.
+- EKF + optional SLAM/Cartographer + Cyclone DDS in Docker (`docs/CARTOGRAPHER_EKF_SETUP_GUIDE.md`).
 - Docker-first workflow for reproducibility.
 
 ---

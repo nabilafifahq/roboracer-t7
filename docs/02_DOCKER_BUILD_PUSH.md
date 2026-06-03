@@ -111,18 +111,65 @@ git checkout feat/manual-map-ekf-pursuit   # or main after PR merge
 ./scripts/docker_build_full_stack.sh
 ```
 
-**Raspberry Pi (ARM64) from Mac — push only:**
+**Raspberry Pi (ARM64) from Mac — buildx (emulated ARM on Mac, native on Pi):**
+
+Use this when the car is a **Pi (aarch64)** and you build on a **Mac**. Docker Desktop runs the build inside a buildx builder; on Intel Mac the `linux/arm64` layers are **emulated** (slow but correct for `docker pull` on the Pi).
 
 ```bash
+cd /path/to/roboracer-t7
+export DOCKER_USER=<your_dockerhub_username>   # not a classmate's account
+docker login
+
+# Recommended helper (creates roboracer-buildx builder if needed, then --push):
+./scripts/docker_buildx_arm64.sh
+
+# Same thing via env var:
 PLATFORM=linux/arm64 ./scripts/docker_build_full_stack.sh
+```
+
+**First-time buildx on Mac (if the script errors about builders):**
+
+```bash
+docker buildx create --name roboracer-buildx --driver docker-container --bootstrap
+docker buildx use roboracer-buildx
+docker buildx inspect --bootstrap
+```
+
+Expect **30–90+ minutes** on a Mac (Livox SDK compile, `colcon build`, Cartographer packages). Use a stable network; the script uses `--progress=plain` so you see logs.
+
+**Optional tags:**
+
+```bash
+TAG=full-stack ./scripts/docker_buildx_arm64.sh
+```
+
+**Do not use `--load` for Pi deploy** unless you only need a local arm64 image; default is **`--push`** so the Pi pulls from Hub:
+
+```bash
+# Local arm64 image only (no push) — rarely needed on Mac
+PUSH=0 LOAD=1 ./scripts/docker_buildx_arm64.sh
 ```
 
 **Manual equivalent:**
 
 ```bash
-docker build -f docker/dockerfile -t nabilafifahq/roboracer-t7:full-stack .
-docker push nabilafifahq/roboracer-t7:full-stack
+docker buildx create --name roboracer-buildx --driver docker-container --bootstrap 2>/dev/null || true
+docker buildx use roboracer-buildx
+docker buildx build --platform linux/arm64 \
+  -f docker/dockerfile \
+  -t ${DOCKER_USER}/roboracer-t7:full-stack \
+  --progress=plain \
+  --push .
 ```
+
+**Native build on Mac (arm64 Mac only, no push to Pi if Pi expects same tag from Hub):**
+
+```bash
+docker build -f docker/dockerfile -t ${DOCKER_USER}/roboracer-t7:full-stack .
+docker push ${DOCKER_USER}/roboracer-t7:full-stack
+```
+
+On an **Apple Silicon Mac**, plain `docker build` is already `linux/arm64`; buildx is still preferred for a clean cross-build environment and matching CI.
 
 **On the car:**
 
