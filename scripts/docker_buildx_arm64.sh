@@ -20,7 +20,7 @@ cd "${REPO_ROOT}"
 
 DOCKER_USER="${DOCKER_USER:-nabilafifahq}"
 IMAGE_NAME="${IMAGE_NAME:-roboracer-t7}"
-TAG="${TAG:-full-stack}"
+TAG="${TAG:-cartographer-ekf-arm64}"
 PLATFORM="${PLATFORM:-linux/arm64}"
 BUILDER="${BUILDER:-roboracer-buildx}"
 DOCKERFILE="${REPO_ROOT}/docker/dockerfile"

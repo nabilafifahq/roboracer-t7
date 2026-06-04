@@ -96,11 +96,11 @@ docker buildx build --platform linux/arm64 \
 
 ---
 
-## 2d) **Full-stack** image (`full-stack` tag) — use this on the car
+## 2d) **Full-stack** image (`cartographer-ekf-arm64` tag) — use this on the car
 
-One image for the **combined** branch: Cyclone DDS, EKF, SLAM, joy sign fix, VESC patch, manual map logger, TUM optimizer source, **Derek** `traj_csv_path_publisher` + Nav2 vector pursuit, geometric pursuit (optional), unified **`bringup.launch.py`**.
+One image for the **combined** branch: Cyclone DDS, EKF, Cartographer + SLAM Toolbox (optional), joy sign fix, VESC patch, manual map logger, TUM optimizer source, **Derek** `traj_csv_path_publisher` + Nav2 vector pursuit, geometric pursuit (optional), unified **`bringup.launch.py`**.
 
-**Tag:** `nabilafifahq/roboracer-t7:full-stack`  
+**Tag:** `<DOCKER_USER>/roboracer-t7:cartographer-ekf-arm64` (example: `derekh0803/roboracer-t7:cartographer-ekf-arm64`)  
 Build from branch **`feat/manual-map-ekf-pursuit`** (or `main` after merge).
 
 **Build and push (helper script):**
@@ -140,7 +140,7 @@ Expect **30–90+ minutes** on a Mac (Livox SDK compile, `colcon build`, Cartogr
 **Optional tags:**
 
 ```bash
-TAG=full-stack ./scripts/docker_buildx_arm64.sh
+TAG=cartographer-ekf-arm64 ./scripts/docker_buildx_arm64.sh
 ```
 
 **Do not use `--load` for Pi deploy** unless you only need a local arm64 image; default is **`--push`** so the Pi pulls from Hub:
@@ -157,7 +157,7 @@ docker buildx create --name roboracer-buildx --driver docker-container --bootstr
 docker buildx use roboracer-buildx
 docker buildx build --platform linux/arm64 \
   -f docker/dockerfile \
-  -t ${DOCKER_USER}/roboracer-t7:full-stack \
+  -t ${DOCKER_USER}/roboracer-t7:cartographer-ekf-arm64 \
   --progress=plain \
   --push .
 ```
@@ -165,8 +165,8 @@ docker buildx build --platform linux/arm64 \
 **Native build on Mac (arm64 Mac only, no push to Pi if Pi expects same tag from Hub):**
 
 ```bash
-docker build -f docker/dockerfile -t ${DOCKER_USER}/roboracer-t7:full-stack .
-docker push ${DOCKER_USER}/roboracer-t7:full-stack
+docker build -f docker/dockerfile -t ${DOCKER_USER}/roboracer-t7:cartographer-ekf-arm64 .
+docker push ${DOCKER_USER}/roboracer-t7:cartographer-ekf-arm64
 ```
 
 On an **Apple Silicon Mac**, plain `docker build` is already `linux/arm64`; buildx is still preferred for a clean cross-build environment and matching CI.
@@ -175,8 +175,9 @@ On an **Apple Silicon Mac**, plain `docker build` is already `linux/arm64`; buil
 
 ```bash
 docker rm -f roboracer_t7 2>/dev/null || true
-docker pull nabilafifahq/roboracer-t7:full-stack
-export IMAGE=nabilafifahq/roboracer-t7:full-stack
+export DOCKER_USER=derekh0803   # or your Hub username
+docker pull ${DOCKER_USER}/roboracer-t7:cartographer-ekf-arm64
+export IMAGE=${DOCKER_USER}/roboracer-t7:cartographer-ekf-arm64
 ./scripts/car_run.sh
 ```
 

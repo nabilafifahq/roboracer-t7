@@ -112,10 +112,12 @@ class ManualMapLogger(Node):
         except Exception as e:
             self.get_logger().error(
                 f"No rows yet: TF {self._world}->{self._robot} unavailable ({e}). "
-                f"With SLAM, wait until `ros2 run tf2_ros tf2_echo map base_link` works, "
+                f"With SLAM/Cartographer, launch bringup with use_cartographer:=true (or use_slam:=true) "
+                f"and wait until `ros2 run tf2_ros tf2_echo map base_link` works, "
                 f"or use -p world_frame:=odom if not using map."
             )
-        elif self._last_scan is None:
+            return
+        if self._last_scan is None:
             self.get_logger().error(
                 f"No rows yet: waiting for {self._scan_topic}. Check `ros2 topic hz {self._scan_topic}`."
             )

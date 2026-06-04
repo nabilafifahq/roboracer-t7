@@ -178,26 +178,56 @@ source /race_ws/install/setup.bash
 ### Step A — Start stack (EKF + Cartographer)
 
 ```bash
-ros2 launch /race_ws/bringup.launch.py autonomy:=wall_follow use_cartographer:=true
+/race_ws/scripts/launch_cartographer_mapping.sh
 ```
 
 ### Step B — Preflight (second shell)
 
+**Prerequisite:** Step A (`bringup` with `use_cartographer:=true`) must still be **running** in another terminal. If you only opened one `bash` in the container and never launched bringup, `map` will not exist and preflight will fail — that is expected.
+
+If the logger reports **“two or more unconnected trees”** for `map` → `base_link`, Cartographer is not publishing `map` → `odom` (node crashed or bringup not running). Fix Lua per `scripts/car_mapping_session_fix.sh`, relaunch bringup, verify `tf2_echo map base_link` before logging.
+
+**Open a second shell** (from the Pi host, while the container is running):
+
 ```bash
-/race_ws/scripts/preflight_manual_map_logger.sh
+docker exec -it roboracer_t7 bash
+```
+
+Inside that shell, source ROS (use `set +u` so setup.bash does not error):
+
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+set +u
+source /opt/ros/humble/setup.bash
+source /race_ws/install/setup.bash
+set -u
+```
+
+Run checks:
+
+```bash
+/race_ws/scripts/preflight_cartographer_map.sh
 ros2 run tf2_ros tf2_echo map base_link
 ```
 
-Wait until `map` → `base_link` updates **smoothly** (often **10–30 s** after `/scan` is healthy). Do not start logging until then.
+**Pass criteria for Step B**
+
+| Check | Good | Bad (fix before Step C) |
+|-------|------|-------------------------|
+| `/scan` | ~5–15 Hz | Livox / pointcloud bridge — see `docs/07_TROUBLESHOOTING.md` §10 |
+| `/odometry/filtered` | ~15 Hz | VESC + EKF not running — finish Step A |
+| `tf2_echo odom base_link` | Translation updates | EKF / VESC issue |
+| `tf2_echo map base_link` | Translation updates | Cartographer not running or no motion yet |
+| `/map` | Publishing when Cartographer up | `use_cartographer:=true` missing in Step A |
+
+Wait until `map` → `base_link` updates **smoothly** (often **10–30 s** after `/scan` is healthy; **roll the car slowly** a few meters if it stays stuck). Do not start logging until then.
+
+**If `map` never appears:** in Terminal A look for `cartographer_node` errors; confirm `ros2 node list | grep cartographer`. Do not run Step C until `tf2_echo map base_link` works.
 
 ### Step C — Log CSV in `map` frame
 
 ```bash
-ros2 run reactive_control manual_map_logger --ros-args \
-  -p world_frame:=map \
-  -p robot_frame:=base_link \
-  -p record_hz:=20.0 \
-  -p output_csv:=/race_ws/logs/map_cart_$(date +%Y%m%d_%H%M%S).csv
+/race_ws/scripts/run_manual_map_logger_map.sh
 ```
 
 Drive **one slow, complete lap** with RC deadman on. `Ctrl+C` the logger when finished.
@@ -292,6 +322,26 @@ world_frame:=map             # manual_map_logger parameter
 ### Do not run together
 
 - `use_cartographer:=true` **and** `use_slam:=true` → bringup starts **only Cartographer** (SLAM Toolbox suppressed).
+
+---
+
+## Permanent fixes in this repo (baked into image on rebuild)
+
+| Fix | File(s) |
+|-----|---------|
+| Humble Cartographer Lua (no exit -6) | `config/cartographer/map_builder.lua`, `trajectory_builder.lua`, `roboracer_2d.lua` |
+| EKF owns `odom`→`base_link` | `provide_odom_frame = false` in `roboracer_2d.lua` |
+| Livox IMU TF | `bringup.launch.py` → `static_base_link_to_livox_frame` |
+| `/drive` QoS vs mux | `wall_follow_node.py` → `drive_qos` **RELIABLE** |
+| Logger syntax | `manual_map_logger.py` (`return` after TF error) |
+| Preflight `set -u` | `scripts/preflight_manual_map_logger.sh` |
+| Car helpers | `scripts/car_ros_env.sh`, `launch_cartographer_mapping.sh`, `preflight_cartographer_map.sh`, `run_manual_map_logger_map.sh` |
+
+Rebuild and pull: `./scripts/docker_buildx_arm64.sh` → `derekh0803/roboracer-t7:cartographer-ekf-arm64`
+
+**On car after new image:** no in-container Lua patches needed.
+
+**Old image hotfix only:** `docs/snippets/car_cursor_fix_all.sh`
 
 ---
 

@@ -12,7 +12,7 @@ set -euo pipefail
 
 DOCKER_USER="${DOCKER_USER:-nabilafifahq}"
 IMAGE_NAME="${IMAGE_NAME:-roboracer-t7}"
-TAG="${TAG:-full-stack}"
+TAG="${TAG:-cartographer-ekf-arm64}"
 PLATFORM="${PLATFORM:-}"  # set to linux/arm64 for Pi push-from-Mac via buildx
 BUILDER="${BUILDER:-roboracer-buildx}"
 

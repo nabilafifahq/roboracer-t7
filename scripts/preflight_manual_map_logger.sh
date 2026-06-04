@@ -1,12 +1,15 @@
 #!/bin/bash
 # Quick checks before manual_map_logger hallway capture (see docker/dockerfile + docs).
 # Run inside the race container after bringup, same RMW as the stack.
-set -euo pipefail
+set -eo pipefail
 export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+# ROS setup.bash references optional vars; avoid `set -u` while sourcing.
+set +u
 source /opt/ros/humble/setup.bash
 if [ -f /race_ws/install/setup.bash ]; then
   source /race_ws/install/setup.bash
 fi
+set -u
 
 echo "=== RMW_IMPLEMENTATION=$RMW_IMPLEMENTATION ==="
 echo "=== vesc.yaml publish_tf (installed) ==="

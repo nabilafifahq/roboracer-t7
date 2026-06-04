@@ -97,6 +97,8 @@ def generate_launch_description() -> LaunchDescription:
     wall_follow_on = UnlessCondition(
         _autonomy_one_of(
             autonomy,
+            "manual",
+            "none",
             "raceline_path",
             "csv_path",
             "raceline",
@@ -118,7 +120,8 @@ def generate_launch_description() -> LaunchDescription:
                 "autonomy",
                 default_value="wall_follow",
                 description=(
-                    "wall_follow (default); raceline_path or csv_path = Derek CSV->/global_path only (team-tested); "
+                    "wall_follow (default); manual or none = RC only, no /drive autonomy (use with Cartographer mapping); "
+                    "raceline_path or csv_path = Derek CSV->/global_path only (team-tested); "
                     "raceline or nav2_vector_pursuit = CSV + Nav2 vector pursuit; "
                     "raceline_pure_pursuit = geometric pursuit on /drive (experimental)."
                 ),
@@ -169,6 +172,23 @@ def generate_launch_description() -> LaunchDescription:
                 PythonLaunchDescriptionSource(
                     os.path.join(livox_launch_dir, "msg_MID360_launch.py")
                 )
+            ),
+            # Livox IMU often uses frame_id livox_frame; EKF needs base_link <- livox_frame in TF tree.
+            # Same extrinsics as base_link -> laser (f1tenth stack); adjust x/y/z if your mount differs.
+            Node(
+                package="tf2_ros",
+                executable="static_transform_publisher",
+                name="static_base_link_to_livox_frame",
+                arguments=[
+                    "0.27",
+                    "0",
+                    "0.11",
+                    "0",
+                    "0",
+                    "0",
+                    "base_link",
+                    "livox_frame",
+                ],
             ),
             # System monitor (publishes /diagnostics for rosbag + post-race analysis)
             IncludeLaunchDescription(

@@ -54,7 +54,12 @@ COPY config/cartographer/ /race_ws/config/cartographer/
 COPY launch/cartographer_2d.launch.py /race_ws/launch/cartographer_2d.launch.py
 COPY bringup.launch.py /race_ws/bringup.launch.py
 COPY scripts/ /race_ws/scripts/
-RUN chmod +x /race_ws/scripts/preflight_manual_map_logger.sh
+RUN chmod +x /race_ws/scripts/preflight_manual_map_logger.sh \
+	&& chmod +x /race_ws/scripts/car_ros_env.sh \
+	&& chmod +x /race_ws/scripts/launch_cartographer_mapping.sh \
+	&& chmod +x /race_ws/scripts/preflight_cartographer_map.sh \
+	&& chmod +x /race_ws/scripts/run_manual_map_logger_map.sh \
+	&& chmod +x /race_ws/scripts/car_mapping_session_fix.sh
 COPY docker/patch_tum_main_globaltraj_ros.py /tmp/patch_tum_main_globaltraj_ros.py
 COPY docker/patch_vesc_yaml.py /tmp/patch_vesc_yaml.py
 RUN chmod +x /race_ws/scripts/manual_map_csv_to_tum_track.py \
@@ -178,12 +183,30 @@ RUN source /opt/ros/humble/setup.sh && \
 COPY docker/install_mux_config.sh /tmp/install_mux_config.sh
 RUN chmod +x /tmp/install_mux_config.sh && /tmp/install_mux_config.sh
 
+# Cartographer: must load Humble defaults via dofile (avoids full_resolution_depth / 3D matcher crash).
+RUN set -euxo pipefail; \
+	grep -q "dofile('/opt/ros/humble/share/cartographer/configuration_files/map_builder.lua')" \
+		/race_ws/config/cartographer/map_builder.lua; \
+	grep -q "provide_odom_frame = false" /race_ws/config/cartographer/roboracer_2d.lua; \
+	! grep -q "TRAJECTORY_BUILDER = TRAJECTORY_BUILDER_2D" /race_ws/config/cartographer/trajectory_builder.lua; \
+	grep -q "use_cartographer" /race_ws/bringup.launch.py; \
+	grep -q "livox_frame" /race_ws/bringup.launch.py; \
+	test -f /race_ws/launch/cartographer_2d.launch.py; \
+	echo "OK: Cartographer config + bringup checks"
+
 # Fail build if vesc_to_odom is not configured to stop publishing odom->base_link (EKF must own it).
 RUN set -euxo pipefail; \
 	vesc="$(find /race_ws/install -path '*/share/*/config/vesc.yaml' -print -quit)"; \
 	test -n "$vesc"; \
 	grep -A40 "vesc_to_odom_node:" "$vesc" | grep -q "publish_tf: false" || { echo "ERROR: vesc_to_odom_node missing publish_tf: false in $vesc" >&2; grep -n "publish_tf" "$vesc" || true; exit 1; }; \
 	echo "OK: vesc_to_odom publish_tf false verified in $vesc"
+
+# Python syntax + wall_follow /drive QoS (RELIABLE for ackermann_mux).
+RUN set -euxo pipefail; \
+	python3 -c "import ast; ast.parse(open('/race_ws/src/wall_follow_script/reactive_control/manual_map_logger.py').read())"; \
+	grep -q "ReliabilityPolicy.RELIABLE" /race_ws/src/wall_follow_script/reactive_control/wall_follow_node.py; \
+	grep -A6 "drive_qos = QoSProfile" /race_ws/src/wall_follow_script/reactive_control/wall_follow_node.py | grep -q RELIABLE; \
+	echo "OK: manual_map_logger syntax + wall_follow drive_qos RELIABLE"
 
 # Interactive `docker exec -it ... bash` does not run ENTRYPOINT; still default to Cyclone.
 RUN printf '%s\n' \

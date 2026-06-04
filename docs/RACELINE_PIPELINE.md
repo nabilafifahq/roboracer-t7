@@ -97,5 +97,5 @@ See **`docs/AUTONOMY_MODES.md`**.
 ```bash
 ./scripts/docker_build_full_stack.sh
 # Pi from Mac: PLATFORM=linux/arm64 ./scripts/docker_build_full_stack.sh
-docker pull nabilafifahq/roboracer-t7:full-stack
+docker pull ${DOCKER_USER:-derekh0803}/roboracer-t7:cartographer-ekf-arm64
 ```

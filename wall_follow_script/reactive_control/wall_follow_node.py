@@ -56,10 +56,11 @@ class WallFollowNode(Node):
         )
         self.create_subscription(LaserScan, "/scan", self.lidar_callback, scan_qos)
 
+        # ackermann_mux subscribes to /drive with RELIABLE; must match or mux ignores messages.
         drive_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=10,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
         )
 
         self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", drive_qos)
