@@ -19,6 +19,8 @@ joy_teleop:
           offset: 0.0
         drive-steering_angle:
           axis: 3
-          # Max |steering_angle| ≈ scale [rad]. 1.0 ≈ 57° — U-turn tuning (slow speed; watch servo bind).
-          scale: 1.0
+          # Max |steering_angle| ≈ scale [rad]. 0.40 ≈ 23° — softer than 1.0 so a gentle
+          # stick move doesn't slam the servo to full lock (1.0 saturated the servo and
+          # made smooth manual-mapping driving almost impossible).
+          scale: 0.40
           offset: 0.0

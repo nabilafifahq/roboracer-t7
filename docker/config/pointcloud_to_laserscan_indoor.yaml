@@ -4,29 +4,27 @@ pointcloud_to_laserscan:
     target_frame: laser
     transform_tolerance: 0.2
 
-    # Height slice is measured in the LASER frame, which sits 0.11 m above base_link
-    # (static TF base_link->laser = 0.27 0 0.11). So z_laser = z_ground - 0.11.
-    #
-    # Track walls are only ~0.20 m tall (ICRA/IV indoor pipes). The wall band in the
-    # laser frame is roughly -0.11 m (floor) .. +0.09 m (wall top). The old slice
-    # (max_height 0.35 = ~0.46 m above ground) sliced WAY over the walls and picked up
-    # people / far structure / background -> SLAM noise ("lidar looking too high").
-    #
-    # Keep the slice INSIDE the wall band: above the floor, below the wall top.
-    #   min_height -0.08  -> ~0.03 m above ground (drop floor/tilt returns)
-    #   max_height  0.06  -> ~0.17 m above ground (stay under the ~0.20 m wall top)
-    # Verify on the car: `ros2 topic echo /livox/lidar --once` or bag the cloud and
-    # check the z histogram of wall hits, then nudge these two numbers.
-    min_height: -0.08
-    max_height: 0.06
+    # Height slice is measured in the LASER frame. Measured 2026-06-04: LiDAR top is
+    # 0.18 m above the floor (optical center ~0.15 m), so z_laser = z_ground - ~0.15.
+    # Track features: hose 0.30 m, box & wall 0.20 m. Slice -0.10..0.12 in the laser
+    # frame ~= 0.05..0.27 m above ground -> sits on the middle of all three features,
+    # above the floor. (Old 0.06 was too tight for the round 0.30 m hose -> fragments.)
+    min_height: -0.10
+    max_height: 0.12
 
-    angle_min: -1.5708
-    angle_max: 1.5708
+    # FULL 360 deg. The MID-360 is a 360 LiDAR; the old +-90 (180) slice threw away
+    # half the scan, so walls beside/behind the car (e.g. when following one) were
+    # never seen. 360 also makes any LiDAR-mounting-yaw error irrelevant.
+    angle_min: -3.14159
+    angle_max: 3.14159
     angle_increment: 0.00872665
     scan_time: 0.1
 
     range_min: 0.20
-    range_max: 12.0
+    # 4.0 m for the open-window UCSD test venue: caps the LiDAR just past the track so
+    # it ignores the courtyard/building seen through the open side (12 m flooded SLAM
+    # with radial free-ray noise). For a CLOSED competition track, raise to ~8-12 m.
+    range_max: 4.0
     use_inf: true
 
     # Livox publishes /livox/lidar as RELIABLE; default cloud_in sub is BEST_EFFORT (no data).
