@@ -1,0 +1,199 @@
+# Whole Lap 1
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from ipywidgets import interact, IntSlider, HBox, VBox, Button, Output, Layout
+from IPython.display import display, clear_output
+import ipywidgets as widgets
+
+# Enable interactive matplotlib
+%matplotlib inline
+
+# Load CSV
+df = pd.read_csv("lap_011809.csv")
+
+# Convert wall columns to numeric
+df["left_wall_m"] = pd.to_numeric(df["left_wall_m"], errors="coerce")
+df["right_wall_m"] = pd.to_numeric(df["right_wall_m"], errors="coerce")
+
+# Remove rows missing pose data
+df = df.dropna(subset=["x", "y", "yaw_rad"])
+
+# Extract arrays
+x = df["x"].values
+y = df["y"].values
+yaw = df["yaw_rad"].values
+
+wL = df["left_wall_m"].values
+wR = df["right_wall_m"].values
+
+# Left-facing normal vector
+nx = -np.sin(yaw)
+ny = np.cos(yaw)
+
+# Compute wall coordinates
+left_x = np.where(np.isfinite(wL), x + nx * wL, np.nan)
+left_y = np.where(np.isfinite(wL), y + ny * wL, np.nan)
+right_x = np.where(np.isfinite(wR), x - nx * wR, np.nan)
+right_y = np.where(np.isfinite(wR), y - ny * wR, np.nan)
+
+# Remove NaN values for cleaner plotting
+valid_mask = np.isfinite(left_x) & np.isfinite(left_y) & np.isfinite(right_x) & np.isfinite(right_y)
+x_clean = x[valid_mask]
+y_clean = y[valid_mask]
+left_x_clean = left_x[valid_mask]
+left_y_clean = left_y[valid_mask]
+right_x_clean = right_x[valid_mask]
+right_y_clean = right_y[valid_mask]
+
+# Create output widget
+out = Output()
+
+# Define plotting function
+def plot_chunk(chunk_num, chunk_size, show_full):
+    out.clear_output(wait=True)
+    with out:
+        fig, ax = plt.subplots(figsize=(12, 10))
+        
+        start_idx = (chunk_num - 1) * chunk_size
+        end_idx = min(start_idx + chunk_size, len(x_clean))
+        
+        if show_full:
+            # Show all data with transparency
+            ax.scatter(x_clean, y_clean, s=5, c="black", alpha=0.2, label="Centerline (Full)")
+            ax.scatter(left_x_clean, left_y_clean, s=5, c="blue", alpha=0.15, label="Left Wall (Full)")
+            ax.scatter(right_x_clean, right_y_clean, s=5, c="red", alpha=0.15, label="Right Wall (Full)")
+            
+            # Highlight current chunk
+            ax.scatter(x_clean[start_idx:end_idx], y_clean[start_idx:end_idx], 
+                      s=25, c="black", alpha=0.9, label=f"Chunk {chunk_num} Centerline")
+            ax.scatter(left_x_clean[start_idx:end_idx], left_y_clean[start_idx:end_idx], 
+                      s=25, c="blue", alpha=0.9, label=f"Chunk {chunk_num} Left")
+            ax.scatter(right_x_clean[start_idx:end_idx], right_y_clean[start_idx:end_idx], 
+                      s=25, c="red", alpha=0.9, label=f"Chunk {chunk_num} Right")
+        else:
+            # Show only current chunk
+            ax.scatter(x_clean[start_idx:end_idx], y_clean[start_idx:end_idx], 
+                      s=15, c="black", label="Centerline")
+            ax.scatter(left_x_clean[start_idx:end_idx], left_y_clean[start_idx:end_idx], 
+                      s=15, c="blue", label="Left Wall")
+            ax.scatter(right_x_clean[start_idx:end_idx], right_y_clean[start_idx:end_idx], 
+                      s=15, c="red", label="Right Wall")
+        
+        ax.axis("equal")
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc='upper right', fontsize=8)
+        
+        total_chunks = (len(x_clean) + chunk_size - 1) // chunk_size
+        
+        if show_full:
+            ax.set_title(f"Full Track View - Highlighting Chunk {chunk_num}/{total_chunks}\n(Rows {start_idx}-{end_idx-1} of {len(x_clean)})")
+        else:
+            ax.set_title(f"Track Wall View - Chunk {chunk_num}/{total_chunks}\n(Rows {start_idx}-{end_idx-1} of {len(x_clean)})")
+        
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        
+        plt.tight_layout()
+        plt.show()
+
+# Create interactive widgets
+chunk_size = 10
+total_chunks = (len(x_clean) + chunk_size - 1) // chunk_size
+
+# Slider for chunk selection
+chunk_slider = widgets.IntSlider(
+    value=1,
+    min=1,
+    max=total_chunks,
+    step=1,
+    description='Chunk:',
+    style={'description_width': 'initial'},
+    layout=Layout(width='400px')
+)
+
+# Toggle button for full view
+toggle_button = widgets.ToggleButton(
+    value=False,
+    description='Show Full Track',
+    button_style='info',
+    layout=Layout(width='150px')
+)
+
+# Chunk size dropdown
+chunk_size_dropdown = widgets.Dropdown(
+    options=[5, 10, 20, 50, 100],
+    value=10,
+    description='Chunk Size:',
+    style={'description_width': 'initial'},
+    layout=Layout(width='180px')
+)
+
+# Play button
+play_button = widgets.Play(
+    interval=500,
+    value=1,
+    min=1,
+    max=total_chunks,
+    step=1,
+    description="Play",
+    show_repeat=True,
+    layout=Layout(width='150px')
+)
+
+# Connect play button to slider
+widgets.jslink((play_button, 'value'), (chunk_slider, 'value'))
+
+# Store current state
+current_show_full = False
+current_chunk_size = 500
+
+# Update function
+def update_plot(change=None):
+    global current_show_full, current_chunk_size
+    chunk_num = chunk_slider.value
+    plot_chunk(chunk_num, current_chunk_size, current_show_full)
+
+# Handle toggle change
+def on_toggle_change(change):
+    global current_show_full
+    current_show_full = change['new']
+    update_plot()
+
+# Handle chunk size change
+def on_chunk_size_change(change):
+    global current_chunk_size
+    current_chunk_size = change['new']
+    total_chunks_new = (len(x_clean) + current_chunk_size - 1) // current_chunk_size
+    
+    # Update slider max
+    chunk_slider.max = total_chunks_new
+    play_button.max = total_chunks_new
+    
+    # Reset to first chunk if current is out of range
+    if chunk_slider.value > total_chunks_new:
+        chunk_slider.value = total_chunks_new
+    
+    update_plot()
+
+# Register callbacks
+chunk_slider.observe(lambda x: update_plot(), names='value')
+toggle_button.observe(on_toggle_change, names='value')
+chunk_size_dropdown.observe(on_chunk_size_change, names='value')
+
+# Create control panel
+controls = VBox([
+    HBox([chunk_slider, play_button], layout=Layout(justify_content='center')),
+    HBox([toggle_button, chunk_size_dropdown], layout=Layout(justify_content='center', margin='10px 0px'))
+])
+
+# Display everything
+print("Loading track data...")
+print(f"Total rows: {len(x_clean)}")
+print(f"Initial chunks: {total_chunks}")
+
+display(controls)
+display(out)
+
+# Initial plot
+plot_chunk(1, chunk_size, False)
