@@ -45,7 +45,7 @@ WORKDIR /work/global_racetrajectory_optimization
 # Pin installer tooling to versions compatible with older packages.
 # Newer pip/setuptools can break source builds of old numpy/scipy.
 #
-RUN python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel && \
+RUN python -m pip install --no-cache-dir --upgrade "pip<24" "setuptools<60" wheel "Cython<3" && \
     python -m pip install --no-cache-dir -r requirements.txt && \
     # quadprog wheels can be ABI-problematic; rebuild from source at a known-good version.
     python -m pip uninstall -y quadprog || true && \
