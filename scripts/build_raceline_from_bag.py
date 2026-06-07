@@ -20,14 +20,17 @@ Pipeline (each stage is a single, documented algorithm):
                      clamp to [W_MIN, WIDTH_RADIUS_FRAC*local_radius]  (keeps TUM boundaries non-crossing)
   5. TUM input     : resample at STEP_M, write '# x_m,y_m,w_tr_right_m,w_tr_left_m'
   6. TUM mincurv   : run roboracer-t7-raceline container with the small-track fixes (optional --run-tum)
-  7. figures       : raw map, envelope, final Berlin-style overlay
+  7. figures       : raw map, envelope, final track map overlay
 
-Usage:
+Usage (see docs/MAPPING_AND_RACELINE_GUIDE.md for the full workflow):
+    # Step 1 — de-drift bag offline:
+    ./scripts/cartographer_offline_dedrift.sh testrun/my_run/lap_bag testrun/my_run/maps
+    # Step 2 — build raceline + track map figure:
     python3 scripts/build_raceline_from_bag.py \
-        --bag   testrun/june7_set6/lap3x \
-        --pgm   testrun/june7_set6/maps_4x/track.pgm \
-        --yaml  testrun/june7_set6/maps_4x/track.yaml \
-        --outdir testrun/june7_set6 \
+        --bag   testrun/my_run/lap_bag \
+        --pgm   testrun/my_run/maps/track_dedrift.pgm \
+        --yaml  testrun/my_run/maps/track_dedrift.yaml \
+        --outdir testrun/my_run \
         --run-tum                      # needs docker + roboracer-t7-raceline:latest (amd64)
 
 Deps: numpy, scipy, matplotlib, pillow, rosbags.
@@ -301,8 +304,8 @@ def figures(grid, path, env, sx, sy, half, traj, outdir):
     lc = LineCollection(seg, cmap='viridis', lw=4); v = np.r_[vx, vx[0]]
     lc.set_array((v[:-1] + v[1:]) / 2); ax.add_collection(lc)
     fig.colorbar(lc, ax=ax, fraction=0.046, pad=0.04).set_label('raceline speed (m/s)')
-    ax.set_aspect('equal'); ax.set_title('Berlin-style: measured boundaries + optimal raceline')
-    plt.tight_layout(); out = os.path.join(outdir, 'FINAL_berlin.png'); plt.savefig(out, dpi=140)
+    ax.set_aspect('equal'); ax.set_title('Track map: measured boundaries + optimal raceline')
+    plt.tight_layout(); out = os.path.join(outdir, 'FINAL_track_map.png'); plt.savefig(out, dpi=140)
     print(f"[fig] {out}")
 
 # ----------------------------------------------------------------------------- main

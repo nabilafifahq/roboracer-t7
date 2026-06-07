@@ -8,7 +8,7 @@ This document describes a small ROS 2 node that **records where the car is** and
 
 During a competition or practice, you may want a **dataset of poses plus corridor widths** along the track. A human drives one lap; the computer samples data at a fixed rate and saves it. That is cheaper and simpler than full SLAM for “I just need a path and approximate wall distances along it.”
 
-**For a competition-grade raceline** (CSV → TUM optimizer → pure pursuit aligned with the real track), log in the **`map`** frame with **SLAM** enabled—see **`docs/COMPETITION_RACELINE_PIPELINE.md`**.
+**For a competition-grade raceline** (CSV → TUM optimizer → pure pursuit aligned with the real track), log in the **`map`** frame with **SLAM** enabled—see **`docs/MAPPING_AND_RACELINE_GUIDE.md`** (recommended: record a bag + offline de-drift).
 
 This node does **not** build an occupancy grid or a pretty map image. It **logs samples**: time, position, heading, and two laser-derived distances (left and right “wall” distances in chosen angular sectors).
 

@@ -19,7 +19,8 @@ RoboRacer T7 uses ROS 2 Humble in Docker to run:
 
 Current baseline image:
 
-- `nabilafifahq/roboracer-t7:main-latest`
+- `nabilafifahq/roboracer-t7:cartographer-ekf` (handoff — mapping + EKF + Cartographer)
+- Legacy: `main-latest`, `full-stack`
 
 For custom pushes, each team/user should publish to their own namespace:
 

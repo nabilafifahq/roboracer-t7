@@ -1,196 +1,150 @@
 # Car Connect and Container Startup
 
-This page is for connecting to the car host and entering the runtime container.
+Connect to the car and enter the runtime container.
+
+**Before first session:** read [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) (Wi-Fi, power-on, track).  
+**After this works:** [04_MANUAL_DRIVE_SETUP.md](04_MANUAL_DRIVE_SETUP.md) → [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md).
+
+---
+
+## Which machine?
+
+| Step | Run on | Prompt looks like |
+|------|--------|-------------------|
+| SSH, docker pull, car_run.sh | **Pi host** (via SSH from laptop) | `ucsd-blue@UCSD-Blue:~$` |
+| ROS commands, launch | **Container** (after car_run.sh) | `root@UCSD-Blue:/race_ws#` |
 
 ---
 
 ## 0) Network prerequisite (before SSH)
 
-1. Ensure your laptop's network is the same as that of the car.
-2. Confirm you are targeting the correct vehicle: **1tenth blue car**
-3. The expected host/user for this car is:
+1. Join the same Wi-Fi network as the car — **`ucsd_robocar`** (see [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) §2).
+2. Confirm you are on the **1/10 blue car** (UCSD-Blue).
+3. Connect:
 
 ```bash
 ssh ucsd-blue@ucsd-blue.local
 ```
 
-If the network doesn't match, SSH discovery usually fails.
+If `.local` does not resolve, use the car's IP: `ssh ucsd-blue@<car_ip>`.
 
 ---
 
-## 1) Power-on sequence (do this first)
+## 1) Power-on sequence (every time)
 
-Use this order every time for consistent behavior:
-
-1. Turn ON the RC controller first.
-2. Turn ON car power.
-3. Wait 20-60 seconds for Pi boot and Wi-Fi.
-4. Confirm network is up from your laptop:
+1. Turn **ON** the RC transmitter first.
+2. Turn **ON** car power.
+3. Wait 20–60 seconds for Pi boot.
+4. From laptop:
 
 ```bash
 ping -c 2 ucsd-blue.local
 ```
 
-If `.local` does not resolve, use known car IP in later steps.
-
 ---
 
 ## 2) SSH into car host
 
-Preferred:
-
 ```bash
 ssh ucsd-blue@ucsd-blue.local
+cd ~/roboracer-t7
+git fetch origin && git checkout docs/clean-handoff && git pull
 ```
 
-If `.local` fails, use the known IP:
-
-```bash
-ssh ucsd-blue@<car_ip>
-```
-
-Expected:
-- Host shell prompt appears, similar to: `ucsd-blue@UCSD-Blue:~ $`
+**Expected:** Prompt `ucsd-blue@UCSD-Blue:~$`
 
 ---
 
-## 3) Pull image
+## 3) Pull Docker image
 
-Class default:
+**Use this tag everywhere** (same as all other docs):
 
 ```bash
-docker pull nabilafifahq/roboracer-t7:main-latest
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
+docker pull "$IMAGE"
 ```
 
-Expected:
-- Pull completes without error
-- Image visible in `docker images`
-
-If your team publishes its own image, set:
+**Expected:** Pull completes. Verify:
 
 ```bash
-export IMAGE=<your_dockerhub_username>/roboracer-t7:main-latest
-docker pull ${IMAGE}
+docker images | grep cartographer-ekf
 ```
 
 ---
 
-## 4) Start container
+## 4) Start container (Tab 1 for mapping sessions)
 
-The helper scripts live **inside the git repo**. If you see `No such file or directory`, you are not in that directory (for example you are in `~` only). Either `cd` to your clone first, or call the script by absolute path, e.g. `~/roboracer-t7/scripts/car_run.sh`.
-
-Recommended helper (**from repo root**, or adjust the path):
+From repo root on **Pi host**:
 
 ```bash
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
 ./scripts/car_run.sh
 ```
 
-Expected:
-- Container starts
-- Prompt changes to container prompt, similar to: `root@UCSD-Blue:/race_ws#`
+**Expected:** Prompt changes to `root@UCSD-Blue:/race_ws#` — you are **inside the container**.
 
-To override image for your own namespace:
+If `No such file or directory`: run `cd ~/roboracer-t7` first.
 
-```bash
-IMAGE=<your_dockerhub_username>/roboracer-t7:main-latest ./scripts/car_run.sh
-```
-
-Optional: override Livox MID360 config (host IP/LiDAR IP/ports) without forking:
+Other helpers (run on **Pi host**, not inside container):
 
 ```bash
-cp /path/to/your/MID360_config.json ~/MID360_config.local.json
-LIVOX_MID360_CONFIG_PATH=~/MID360_config.local.json ./scripts/car_run.sh
-```
-
-This bind-mounts your local config into the container at:
-`/race_ws/src/drivers/livox_ros_driver2/config/MID360_config.json`
-
-Useful helpers:
-
-```bash
-./scripts/car_status.sh
-./scripts/car_exec.sh
-./scripts/car_launch.sh
-./scripts/car_stop.sh
-```
-
-Equivalent explicit command:
-
-```bash
-docker run --rm -it \
-  --name roboracer_t7 \
-  --net=host \
-  --ipc=host \
-  --privileged \
-  --device=/dev/input/js0 \
-  --device=/dev/ttyACM0 \
-  --device=/dev/ttyACM1 \
-  -v /dev/sensors:/dev/sensors \
-  -v /dev/bus/usb:/dev/bus/usb \
-  ${IMAGE:-nabilafifahq/roboracer-t7:main-latest}
+./scripts/car_status.sh    # is container running?
+./scripts/car_exec.sh      # open another shell inside container
+./scripts/car_stop.sh      # stop container
 ```
 
 ---
 
 ## 5) Source ROS environment
 
-Inside container:
+Inside container (automatic if you used `car_run.sh` or `car_exec.sh`):
 
 ```bash
 source /opt/ros/humble/setup.bash
-[ -f /race_ws/install/setup.bash ] && source /race_ws/install/setup.bash
+source /race_ws/install/setup.bash
+printenv | grep ROS_DISTRO=
 ```
 
-Expected:
+**Expected:** `ROS_DISTRO=humble`
 
-```bash
-printenv | grep -E '^ROS_DISTRO='
-```
-
-Output should include `ROS_DISTRO=humble`.
-
-Important:
-
-- `./scripts/car_exec.sh` is designed to open a shell with ROS already sourced.
-- If you open any additional shell manually (for example with `docker exec -it ... bash`), run the same source commands again in that shell.
-- Quick check:
-
-```bash
-printenv | grep -E '^ROS_DISTRO='
-```
+Every **new** shell inside the container needs these source commands (or use `./scripts/car_exec.sh` from Pi host).
 
 ---
 
-## 6) Setup VESC symlink
+## 6) VESC device symlink
 
-Inside container:
+Inside container (once per session):
 
 ```bash
 sudo mkdir -p /dev/sensors
-# UCSD-Blue: VESC = STM (ttyACM0), Arduino RC = ttyACM1 — always use ACM0 for VESC.
 sudo ln -sf /dev/ttyACM0 /dev/sensors/vesc
-# Or stable by-id: sudo ln -sf /dev/serial/by-id/usb-STMicroelectronics_* /dev/sensors/vesc
 ls -l /dev/sensors/vesc
 ```
 
-Expected:
-- `/dev/sensors/vesc` points to **`/dev/ttyACM0`** (STM / ChibiOS), **not** `ttyACM1` (Arduino)
+**Expected:** Points to `/dev/ttyACM0` (STM/VESC), **not** `ttyACM1` (Arduino RC).
+
+Note: `car_map_setup.sh` (used in the mapping guide) also creates this symlink.
 
 ---
 
-## 7) Open additional sourced shell (optional)
+## 7) Open a second container shell (for mapping)
 
-From host:
+From **Pi host** (new SSH tab — prompt `ucsd-blue@...`):
 
 ```bash
+cd ~/roboracer-t7
 ./scripts/car_exec.sh
 ```
 
+**Expected:** Second container shell at `root@UCSD-Blue:/race_ws#`.
+
+See [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) for the full 3-tab layout.
+
 ---
 
-## 8) Power-off sequence (recommended)
+## 8) Power-off sequence
 
-1. Stop ROS launch (`Ctrl+C`).
-2. Stop container (`./scripts/car_stop.sh` or exit running shell).
-3. Turn OFF car power.
-4. Turn OFF RC controller last.
+1. Stop ROS launch (`Ctrl+C` in container).
+2. Exit container or run `./scripts/car_stop.sh` on Pi host.
+3. Turn **OFF** car power.
+4. Turn **OFF** RC transmitter last.

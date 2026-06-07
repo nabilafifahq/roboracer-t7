@@ -1,6 +1,6 @@
 # Install and Requirements
 
-This page covers what must be ready before any driving tests.
+What must be ready before driving tests. For car/track details see [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md).
 
 ---
 
@@ -51,9 +51,10 @@ If device paths are missing, fix hardware/wiring first.
 ## 5) Current default runtime image
 
 ```bash
-nabilafifahq/roboracer-t7:main-latest
+nabilafifahq/roboracer-t7:cartographer-ekf
 ```
 
+This is the mapping image (Cartographer + EKF). Older tag `full-stack` works for basic bringup.
 Use this unless your team explicitly validates a newer tag.
 If you build/push your own image, use your own namespace:
 

@@ -1,22 +1,84 @@
 # Docker Build and Push Guide
 
-Use this when updating the stack image.
+Use this when pulling or rebuilding the stack image.
 
 Important: do **not** log in to another student's Docker Hub account.
 
 ---
 
-## 1) Choose your workflow
+## Handoff image (use this)
 
-### A) Run the class-validated image only (most users)
-
-You only need pull access:
+**All setup docs and car scripts default to:**
 
 ```bash
-docker pull nabilafifahq/roboracer-t7:main-latest
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
+docker pull nabilafifahq/roboracer-t7:cartographer-ekf
 ```
 
-No Docker Hub login is required for public pull.
+Pull on **both** the car (Raspberry Pi) and your **laptop** (laptop needs it for offline map de-drift).
+
+Contains: ROS 2 Humble, Livox MID-360, EKF, Cartographer, wall-follow, map logger, unified `bringup.launch.py`.
+
+**Build this tag** (maintainers, from repo root):
+
+```bash
+TAG=cartographer-ekf ./scripts/docker_build_full_stack.sh
+docker push nabilafifahq/roboracer-t7:cartographer-ekf
+```
+
+On Mac for Pi (arm64):
+
+```bash
+TAG=cartographer-ekf PLATFORM=linux/arm64 ./scripts/docker_build_full_stack.sh
+```
+
+---
+
+## Handoff image — raceline optimizer (laptop only)
+
+The TUM raceline optimizer runs in a **separate** image on your **laptop** (amd64). Required for `build_raceline_from_bag.py --run-tum`.
+
+**Build once:**
+
+```bash
+cd /path/to/roboracer-t7
+docker build -f docker/raceline.dockerfile -t roboracer-t7-raceline:latest .
+```
+
+**Verify:**
+
+```bash
+docker run --rm roboracer-t7-raceline:latest python -c "import numpy; print('ok')"
+```
+
+**Use without building:** run Part B2 **without** `--run-tum` — you still get `tum_track_input.csv` and can optimize later.
+
+The mapping guide Part B uses this image when you pass `--run-tum` to `scripts/build_raceline_from_bag.py`.
+
+---
+
+## Legacy tags (older docs only)
+
+| Tag | Notes |
+|-----|--------|
+| `full-stack` | Older merged stack tag |
+| `main-latest` | Legacy class default |
+| `hallway-test` | Manual map logger testing |
+
+Do **not** mix tags across a session — pick `cartographer-ekf` and set `export IMAGE=...` before every `car_run.sh`.
+
+---
+
+## 1) Choose your workflow
+
+### A) Run the team image (most users)
+
+```bash
+docker pull nabilafifahq/roboracer-t7:cartographer-ekf
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
+```
+
+No Docker Hub login required for public pull.
 
 ### B) Build and publish your own image (maintainers)
 

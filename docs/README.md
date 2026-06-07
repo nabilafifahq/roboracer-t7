@@ -1,32 +1,41 @@
 # Docs Index
 
-Official documentation for this repository lives in this `docs/` folder.
+## Start here (new team)
 
-Start with:
+| Doc | Purpose |
+|-----|---------|
+| [00_START_HERE.md](00_START_HERE.md) | Router |
+| **[HANDOFF_STATUS.md](HANDOFF_STATUS.md)** | **Current status + pick-up task (pursuit)** |
+| [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) | Car, track, Wi-Fi, physical layout — includes **June 2026 track photo** |
+| [PROJECT_LAYOUT.md](PROJECT_LAYOUT.md) | Folder guide |
 
-- `00_START_HERE.md`
+## Main workflow
 
-Core runbooks:
+| Doc | Purpose |
+|-----|---------|
+| [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) | 3-terminal map pipeline (A–B done, **C = your task**) |
 
-- `01_INSTALL_AND_REQUIREMENTS.md`
-- `02_DOCKER_BUILD_PUSH.md`
-- `03_CAR_CONNECT_AND_CONTAINER.md`
-- `04_MANUAL_DRIVE_SETUP.md`
-- `05_AUTONOMY_SETUP_AND_RUN.md`
-- `06_VALIDATION_CHECKLIST.md`
-- `07_TROUBLESHOOTING.md`
-- `08_FULL_STACK_REFERENCE_MANUAL.md`
-- `09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md`
-- `10_EXTERNAL_CREDITS.md`
-- `11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md`
+## Setup (in order)
 
-Architecture and references:
+1. [01_INSTALL_AND_REQUIREMENTS.md](01_INSTALL_AND_REQUIREMENTS.md)
+2. [02_DOCKER_BUILD_PUSH.md](02_DOCKER_BUILD_PUSH.md) — includes raceline optimizer image
+3. [03_CAR_CONNECT_AND_CONTAINER.md](03_CAR_CONNECT_AND_CONTAINER.md)
+4. [04_MANUAL_DRIVE_SETUP.md](04_MANUAL_DRIVE_SETUP.md)
+5. [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md)
+6. [06_VALIDATION_CHECKLIST.md](06_VALIDATION_CHECKLIST.md)
+7. [07_TROUBLESHOOTING.md](07_TROUBLESHOOTING.md)
 
-- `MANUAL_AUTONOMY_NODE_TOPIC_FLOW.md`
-- `MANUAL_AUTONOMY_NODE_TOPIC_FLOW.pdf`
-- `POINTCLOUD2_TO_LASERSCAN_CAR_RUNBOOK.md`
-- `LiDar Mid-360 Manual Decipher.pdf` (raw reference dump from team notes)
+Optional: [05_AUTONOMY_SETUP_AND_RUN.md](05_AUTONOMY_SETUP_AND_RUN.md)
 
-Demo media:
+## Reference
 
-- `How to set Battery to Storage Mode.mov`
+- [08_FULL_STACK_REFERENCE_MANUAL.md](08_FULL_STACK_REFERENCE_MANUAL.md)
+- [09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md](09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md)
+- [10_EXTERNAL_CREDITS.md](10_EXTERNAL_CREDITS.md)
+- [11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md](11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md)
+- [AUTONOMY_MODES.md](AUTONOMY_MODES.md)
+- [MANUAL_MAP_LOGGER.md](MANUAL_MAP_LOGGER.md)
+
+## Archived
+
+[archive/README.md](archive/README.md) — June 2026 session notes (history only)

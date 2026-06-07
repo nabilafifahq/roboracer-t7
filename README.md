@@ -1,86 +1,43 @@
 # RoboRacer T7
 
-UCSD Winter 2026 Team 7 RoboRacer (F1TENTH indoor platform).
+UCSD Winter 2026 Team 7 — F1TENTH indoor RoboRacer (1/10 scale).
 
-RoboRacer (1/10 Robot Indoors) project for:
-
-- Halicioglu Data Science Institute (HDSI), UC San Diego
-- DSC 190, Winter 2026, Team 7
-- Professor/Mentor: Jack Silberman
-- Team Members: Derek Huang, Nabila Afifah Qotrunnada, Ricky Zhang
+**Handoff repo** for the next team.
 
 ---
 
-## Start Here (required)
+## Start here (new team)
 
-Read this first:
+| # | Doc | Purpose |
+|---|-----|---------|
+| 1 | [docs/00_START_HERE.md](docs/00_START_HERE.md) | Router |
+| 2 | **[docs/HANDOFF_STATUS.md](docs/HANDOFF_STATUS.md)** | **What works / where you pick up** |
+| 3 | [docs/PHYSICAL_SETUP.md](docs/PHYSICAL_SETUP.md) | Car, track, Wi-Fi, layout |
+| 4 | [docs/MAPPING_AND_RACELINE_GUIDE.md](docs/MAPPING_AND_RACELINE_GUIDE.md) | Map pipeline + pursuit steps |
 
-- `docs/00_START_HERE.md`
-
-Then follow docs in this exact order:
-
-1. `docs/01_INSTALL_AND_REQUIREMENTS.md`
-2. `docs/02_DOCKER_BUILD_PUSH.md`
-3. `docs/03_CAR_CONNECT_AND_CONTAINER.md`
-4. `docs/04_MANUAL_DRIVE_SETUP.md`
-5. `docs/05_AUTONOMY_SETUP_AND_RUN.md`
-6. `docs/06_VALIDATION_CHECKLIST.md`
-7. `docs/07_TROUBLESHOOTING.md`
-8. `docs/08_FULL_STACK_REFERENCE_MANUAL.md` (full hardware/software/glossary/reference guide)
-9. `docs/09_PLATFORM_VERSIONS_AND_RELEASE_NOTES.md` (official runtime versions + release notes)
-10. `docs/10_EXTERNAL_CREDITS.md` (third-party repo credits and license notes)
-11. `docs/11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md` (kill-switch/fail-safe test plan + competition rule impact)
+**Pick-up task:** We can build a readable map and raceline on the laptop. **Implementing pursuit on the car is not done yet.**
 
 ---
 
-## Repository Structure
+## Quick reference
 
-- `docs/`
-  - all official runbooks, setup guides, troubleshooting, and architecture docs
-- `docker/`
-  - Docker build files and runtime config payloads
-- `config/`
-  - first-party runtime configs (RC teleop, mux topics)
-- `scripts/`
-  - helper shell scripts for container workflow
-- `wall_follow_script/`
-  - first-party autonomy package (`reactive_control`)
-- `bringup.launch.py`
-  - unified launch entrypoint used in runtime image
+```bash
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
+docker pull "$IMAGE"
+```
+
+**Mapping:** 3 terminal tabs on laptop → see mapping guide Part A.  
+**Laptop pipeline:** `cartographer_offline_dedrift.sh` → `build_raceline_from_bag.py`  
+**Reference output:** `testrun/june7_set7/`
 
 ---
 
-## Helper Scripts
+## Repo layout
 
-Be sure the shell prompt reads the following.
-
-```
-root@UCSD-Blue:~#
-```
-
-From repo root on the car host, run these scripts for faster workflow.
-
-- **Build + push combined image:** `./scripts/docker_build_full_stack.sh` → tag `nabilafifahq/roboracer-t7:full-stack`
-- To start the docker container: `./scripts/car_run.sh` (defaults to `full-stack` image)
-- To check the container status: `./scripts/car_status.sh`
-- To open sourced shell in running docker container: `./scripts/car_exec.sh`
-- To launch unified stack for autodrive: `./scripts/car_launch.sh`
-- To stop named container: `./scripts/car_stop.sh`
-- TUM-ready track example: `raceline_data/inputs/tracks/raceline_opt_input.csv` (columns `x_m,y_m,w_tr_right_m,w_tr_left_m`—any filename such as `hallway.csv` works if content matches; set `track_name` to that basename in `main_globaltraj.py`)
-- Manual map logger CSV **not** yet in TUM column layout (current or older logger headers): run `python3 /race_ws/scripts/manual_map_csv_to_tum_track.py` (see `docs/MANUAL_MAP_LOGGER.md` §7)
-- Raceline pipeline (manual map → TUM → Derek pursuit): **`docs/RACELINE_PIPELINE.md`** — use **`autonomy:=raceline_path`** then **`autonomy:=raceline`**
-
-When you successfully started the docker container or opened a running docker container, the shell prompt will now become:
-
-```
-root@UCSD-Blue:/race_ws#
-```
+[docs/PROJECT_LAYOUT.md](docs/PROJECT_LAYOUT.md)
 
 ---
 
-## Additional Reference Docs
+## Docs index
 
-- Node/topic communication map: `docs/MANUAL_AUTONOMY_NODE_TOPIC_FLOW.md`
-- PointCloud2 -> LaserScan focused runbook: `docs/POINTCLOUD2_TO_LASERSCAN_CAR_RUNBOOK.md`
-- External credits/licenses: `docs/10_EXTERNAL_CREDITS.md`
-- Docs index (all docs + media): `docs/README.md`
+[docs/README.md](docs/README.md)

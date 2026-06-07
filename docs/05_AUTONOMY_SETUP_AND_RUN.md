@@ -1,6 +1,8 @@
 # Autonomy Setup and Run
 
-This is the baseline indoor autonomy flow.
+Baseline indoor autonomy (wall-follow). For **track mapping + raceline**, use [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) instead.
+
+**Run on:** Container. Use **Tab 1** for launch, **Tab 2** (`car_exec.sh`) for checks.
 
 ---
 

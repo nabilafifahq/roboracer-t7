@@ -1,23 +1,54 @@
 # Autonomy modes (`bringup.launch.py`)
 
-Manual RC (`/teleop`) always has highest mux priority. Your stack (EKF, SLAM, manual map, VESC) runs in **all** modes.
+Manual RC (`/teleop`) always has highest mux priority (100). Autonomy commands on `/drive` use priority 10.
 
-## Team raceline path (Derek + Ricky — use this)
+**Handoff default:** use **`map` frame** + **`use_cartographer:=true`** — your raceline was built in `map` after offline de-drift. See [HANDOFF_STATUS.md](HANDOFF_STATUS.md).
 
-Derek’s branch implements **optimized TUM CSV → ROS 2 topic**. That is what was tested on the car:
+---
 
-| Step | Component | Topic |
-|------|-----------|--------|
-| 1 | `traj_csv_path_publisher` | publishes `nav_msgs/Path` on **`/global_path`** |
-| 2 (optional) | Nav2 + vector pursuit + bridge | follows path → **`/nav2_cmd_ackermann`** |
+## Recommended for Team 7 pipeline (map frame + Cartographer)
 
-### Mode A — CSV → topic only (**tested**)
+### Step 1 — Launch stack (mapping / localization)
+
+Does **not** drive the car by itself. Provides `/scan`, EKF, Cartographer (`map` → `odom`), and TF.
+
+```bash
+ros2 launch /race_ws/bringup.launch.py \
+  autonomy:=none \
+  use_cartographer:=true
+```
+
+Drive manually with RC while Cartographer builds/refines `map` → `odom`, or use during pursuit so `map` → `base_link` stays defined.
+
+### Step 2 — Pure pursuit ( **start here for your milestone** )
+
+Publishes steering/throttle on `/drive`. **This is what makes the car follow the line.**
+
+```bash
+ros2 run reactive_control raceline_pure_pursuit_node --ros-args \
+  -p trajectory_csv:=/race_ws/racelines/traj_race_cl.csv \
+  -p world_frame:=map \
+  -p target_speed_mps:=0.08 \
+  -p lookahead_m:=0.45 \
+  -p wheelbase_m:=0.33
+```
+
+**Deadman:** Squeeze = stop (RC override). **Release** deadman to let autonomy drive.
+
+Full terminal layout: [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Part C.
+
+---
+
+## Path publisher only (does NOT drive the car)
+
+Publishes the raceline on `/global_path` for RViz or Nav2 — **no motor commands**.
 
 ```bash
 ros2 launch /race_ws/bringup.launch.py \
   autonomy:=raceline_path \
   raceline_csv:=/race_ws/racelines/traj_race_cl.csv \
-  pursuit_world_frame:=odom
+  pursuit_world_frame:=map \
+  use_cartographer:=true
 ```
 
 Verify:
@@ -26,65 +57,72 @@ Verify:
 ros2 topic echo /global_path --once
 ```
 
-Drive manually with RC while visualizing the path in RViz, or record a bag.
+Use this to **visualize** the path while driving manually. For autonomous follow, you still need pure pursuit (above) or Nav2 (below).
 
-Aliases: `autonomy:=csv_path` (same as `raceline_path`).
+Aliases: `autonomy:=csv_path`
 
-### Mode B — CSV + Nav2 vector pursuit (full Derek stack)
+---
 
-Adds Nav2, `global_path_follow_bridge`, and `twist_to_ackermann`. Use when Mode A looks correct and you are ready to close the loop on the car.
+## Nav2 vector pursuit (advanced — not team-validated yet)
+
+Full Derek stack: CSV → `/global_path` → Nav2 → `/nav2_cmd_ackermann` → mux.
 
 ```bash
 ros2 launch /race_ws/bringup.launch.py \
   autonomy:=raceline \
   raceline_csv:=/race_ws/racelines/traj_race_cl.csv \
-  pursuit_world_frame:=odom
+  pursuit_world_frame:=map \
+  use_cartographer:=true
 ```
 
 Aliases: `autonomy:=nav2_vector_pursuit`, `autonomy:=pure_pursuit`.
 
-Mux: **`/nav2_cmd_ackermann`** (priority 50) &lt; **`/teleop`** (100).
+Try this **after** pure pursuit works. See `roboracer_nav2_vector_pursuit/`.
 
-### Map-frame raceline (SLAM + competition pipeline)
+---
+
+## Legacy: `odom` frame (older sessions)
+
+Early tests logged/teached paths in **`odom`**, which drifts. **Do not use for competition-style racelines** unless you accept the path shifting over time.
 
 ```bash
+# Legacy — odom-frame teach log (not recommended for handoff pipeline)
 ros2 launch /race_ws/bringup.launch.py \
   autonomy:=raceline_path \
-  use_slam:=true \
-  pursuit_world_frame:=map \
-  raceline_csv:=/race_ws/racelines/my_race.csv
+  raceline_csv:=/race_ws/racelines/traj_race_cl.csv \
+  pursuit_world_frame:=odom
 ```
 
-Log with `manual_map_logger` using `world_frame:=map`; convert with `manual_map_csv_to_tum_track.py` (see `docs/MANUAL_MAP_LOGGER.md`).
+Team 7's validated offline pipeline outputs **`map`-frame** geometry. Always use `pursuit_world_frame:=map` and `world_frame:=map` for pursuit.
 
 ---
 
 ## Other modes
 
-| `autonomy` | Purpose | Output |
-|------------|---------|--------|
-| `wall_follow` (default) | LiDAR corridor follow | `/drive` (mux 10) |
-| `raceline_pure_pursuit` / `raceline_geometric` | Lightweight geometric pursuit (**experimental**, not team-tested) | `/drive` (mux 10) |
+| `autonomy` | Purpose | Drives car? |
+|------------|---------|-------------|
+| `wall_follow` (default) | LiDAR corridor follow | Yes → `/drive` |
+| `none` | Manual RC only + sensors | No (RC only) |
+| `raceline_path` | Publish `/global_path` | **No** |
+| `raceline` | Nav2 follow | Yes → `/nav2_cmd_ackermann` |
+| `raceline_pure_pursuit` / `raceline_geometric` | Launch-integrated geometric pursuit (experimental) | Yes — prefer standalone node above |
 
 ---
 
-## Pipeline overview (combined repo)
+## Pipeline overview
 
 ```text
-manual_map_logger (your work) -> TUM optimizer -> traj_race_cl.csv
+Bag on car → offline de-drift (laptop) → build_raceline_from_bag.py → traj_race_cl.csv
        |
        v
-traj_csv_path_publisher (Derek) -> /global_path
-       |
-       +--[raceline_path] stop here (team tested)
-       |
-       +--[raceline] Nav2 vector pursuit -> /nav2_cmd_ackermann -> mux -> VESC
+On car: bringup (Cartographer, map frame) + raceline_pure_pursuit_node → /drive → VESC
 ```
 
-Supporting scripts:
+Optional parallel path:
 
-- `scripts/manual_map_csv_to_tum_track.py` — logger CSV → TUM `inputs/tracks/*.csv`
-- `scripts/traj_race_cl_to_waypoints.py` — Derek; waypoint export helper
+```text
+traj_race_cl.csv → traj_csv_path_publisher → /global_path → [Nav2] → /nav2_cmd_ackermann
+```
 
 ---
 
@@ -94,15 +132,15 @@ Supporting scripts:
 sudo ln -sf /dev/ttyACM0 /dev/sensors/vesc
 ```
 
-STM = `ttyACM0`, Arduino RC = `ttyACM1`.
+(`car_map_setup.sh` does this automatically.)
 
 ---
 
-## Rebuild image after pull
+## Image
 
 ```bash
-docker build -f docker/dockerfile -t nabilafifahq/roboracer-t7:main-latest .
-docker push nabilafifahq/roboracer-t7:main-latest
+export IMAGE=nabilafifahq/roboracer-t7:cartographer-ekf
+docker pull "$IMAGE"
 ```
 
-On car: `docker pull`, then your usual `docker run` + launch.
+See [02_DOCKER_BUILD_PUSH.md](02_DOCKER_BUILD_PUSH.md) to rebuild.

@@ -18,7 +18,8 @@ Use this file as the single source of truth for runtime versions and update hist
 
 - OS: Linux on Raspberry Pi host
 - ROS 2: **Humble**
-- Class-validated image: `nabilafifahq/roboracer-t7:main-latest`
+- Handoff image (mapping + EKF): `nabilafifahq/roboracer-t7:cartographer-ekf`
+- Legacy class image: `nabilafifahq/roboracer-t7:main-latest`
 - Team/user image (optional): `<your_dockerhub_username>/roboracer-t7:<tag>`
 - Docker Engine on car host: *(fill from command below)*
 - Docker Engine on dev machine: *(optional)*
@@ -42,7 +43,7 @@ Optional:
 
 ```bash
 git rev-parse --short HEAD
-docker image inspect nabilafifahq/roboracer-t7:main-latest --format '{{index .RepoDigests 0}}'
+docker image inspect nabilafifahq/roboracer-t7:cartographer-ekf --format '{{index .RepoDigests 0}}'
 ```
 
 ---
@@ -54,7 +55,7 @@ Update this block after each validated release.
 - Date validated: `2026-03-12`
 - Branch: `main`
 - Git commit: `c450be7` *(update as needed)*
-- Docker image tag: `nabilafifahq/roboracer-t7:main-latest`
+- Docker image tag: `nabilafifahq/roboracer-t7:cartographer-ekf` (handoff; legacy: `main-latest`)
 - Docker image digest: `sha256:a9069f88e7d6a5cf67909f0c162ad88ad961ff3b22307779cc3045beefe5ec94` *(update if changed)*
 - Docker version (car host): `<set from car host: docker --version>`
 - Docker version (dev machine): `Docker version 29.1.3, build f52814d`

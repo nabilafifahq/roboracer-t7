@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="${CONTAINER_NAME:-roboracer_t7}"
-IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:main-latest}"
+IMAGE="${IMAGE:-nabilafifahq/roboracer-t7:cartographer-ekf}"
 
 CID="$(docker ps -q -f "name=^/${CONTAINER_NAME}$")"
 if [[ -z "${CID}" ]]; then
