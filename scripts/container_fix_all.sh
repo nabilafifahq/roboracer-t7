@@ -63,14 +63,14 @@ pointcloud_to_laserscan:
   ros__parameters:
     target_frame: laser
     transform_tolerance: 0.2
-    min_height: -0.10
-    max_height: 0.30
+    min_height: -0.08
+    max_height: 0.00
     angle_min: -3.14159
     angle_max: 3.14159
     angle_increment: 0.00872665
     scan_time: 0.1
     range_min: 0.20
-    range_max: 4.0          # open-window venue; raise to ~8-12 for a closed track
+    range_max: 2.5          # open-window venue; raise to ~8-12 for a closed track
     use_inf: true
     # Best-effort attempt to match the Livox RELIABLE publisher. The REAL stall fix
     # is CycloneDDS below (the p2l node may ignore this override).

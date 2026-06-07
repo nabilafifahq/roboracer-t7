@@ -1,35 +1,16 @@
 pointcloud_to_laserscan:
   ros__parameters:
-    # Cloud is already frame_id "laser" (Livox patch). Avoid base_link transform when TF is flaky.
     target_frame: laser
     transform_tolerance: 0.2
-
-    # Height slice is measured in the LASER frame. Measured 2026-06-04: LiDAR top is
-    # 0.18 m above the floor (optical center ~0.15 m), so z_laser = z_ground - ~0.15.
-    # Track features: hose 0.30 m, box & wall 0.20 m. Slice -0.10..0.12 in the laser
-    # frame ~= 0.05..0.27 m above ground -> sits on the middle of all three features,
-    # above the floor. (Old 0.06 was too tight for the round 0.30 m hose -> fragments.)
-    min_height: -0.10
-    max_height: 0.12
-
-    # FULL 360 deg. The MID-360 is a 360 LiDAR; the old +-90 (180) slice threw away
-    # half the scan, so walls beside/behind the car (e.g. when following one) were
-    # never seen. 360 also makes any LiDAR-mounting-yaw error irrelevant.
+    # Slice band ~7-15cm above floor (laser origin ~15cm). max_height 0.00 keeps it
+    # BELOW the 20cm middle-box step (two stacked boxes of different width above 20cm
+    # tangled the inner wall). Catches the round hose near its widest (~15cm).
+    min_height: -0.08
+    max_height: 0.00
     angle_min: -3.14159
     angle_max: 3.14159
     angle_increment: 0.00872665
     scan_time: 0.1
-
-    range_min: 0.20
-    # 4.0 m for the open-window UCSD test venue: caps the LiDAR just past the track so
-    # it ignores the courtyard/building seen through the open side (12 m flooded SLAM
-    # with radial free-ray noise). For a CLOSED competition track, raise to ~8-12 m.
-    range_max: 4.0
+    range_min: 0.30
+    range_max: 2.5
     use_inf: true
-
-    # Livox publishes /livox/lidar as RELIABLE; default cloud_in sub is BEST_EFFORT (no data).
-    qos_overrides:
-      /livox/lidar.subscription:
-        reliability: reliable
-        history: keep_last
-        depth: 256
