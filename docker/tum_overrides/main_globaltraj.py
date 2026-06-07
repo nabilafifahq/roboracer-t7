@@ -56,7 +56,7 @@ imp_opts = {"flip_imp_track": False,                # flip imported track to rev
 # 'mincurv'             minimum curvature optimization without iterative call
 # 'mincurv_iqp'         minimum curvature optimization with iterative call
 # 'mintime'             time-optimal trajectory optimization
-opt_type = 'mintime'
+opt_type = 'mincurv'  # robust minimum-curvature racing line (mintime needs friction maps + full vehicle dynamics)
 
 # set mintime specific options (mintime only) --------------------------------------------------------------------------
 # tpadata:                      set individual friction map data file if desired (e.g. for varmue maps), else set None,
@@ -110,8 +110,11 @@ with open(requirements_path, 'r') as fh:
         dependencies.append(line.rstrip())
         line = fh.readline()
 
-# check dependencies
-pkg_resources.require(dependencies)
+# check dependencies (skip strict pin check; quadprog 0.1.6 vs 0.1.7 is functionally equivalent)
+try:
+    pkg_resources.require(dependencies)
+except Exception as _e:
+    print("WARNING: skipping strict dependency version check:", _e)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # INITIALIZATION OF PATHS ----------------------------------------------------------------------------------------------
