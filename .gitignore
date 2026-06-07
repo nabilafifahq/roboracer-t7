@@ -7,3 +7,7 @@ test_manual_map_logger/_plots/
 test_manual_map_logger/*.csv
 !racelines/
 !raceline_data/inputs/tracks/*.csv
+
+# rosbag SQLite files — too large for GitHub (>100MB), keep local only
+*.db3
+*.mcap

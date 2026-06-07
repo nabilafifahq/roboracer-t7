@@ -149,10 +149,14 @@ def main() -> int:
             return None
 
         cx, cy = col("x"), col("y")
+        if cx is None:
+            cx = col("x_m")
+        if cy is None:
+            cy = col("y_m")
         cl, cr = col("left_wall_m"), col("right_wall_m")
         if not all((cx, cy, cl, cr)):
             print(
-                "ERROR: need columns x, y, left_wall_m, right_wall_m in header; got:",
+                "ERROR: need columns x/x_m, y/y_m, left_wall_m, right_wall_m in header; got:",
                 reader.fieldnames,
                 file=sys.stderr,
             )

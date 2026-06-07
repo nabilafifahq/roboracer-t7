@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Merge 5 manual_map training runs into one straight-racetrack wall map.
+Merge manual_map training runs into one straight-racetrack wall map.
 
 Same wall math as your single-run visualizer:
   nx, ny = -sin(yaw), cos(yaw)
   left  = (x, y) + (nx, ny) * left_wall_m
   right = (x, y) - (nx, ny) * right_wall_m
 
-All runs are trimmed from each start, projected into a straight track frame
+Runs are trimmed from each start, projected into a straight track frame
 (s along hallway, d lateral), ghost walls removed (2σ on d), then binned every
 --s-bin-m along track (default 5 cm).
 
@@ -201,6 +201,96 @@ def build_merged_track(
     return seg, pd.DataFrame(rows)
 
 
+def smooth_series(vals: pd.Series, window: int) -> pd.Series:
+    """Robust smoother: median then mean centered rolling windows."""
+    if window < 3:
+        return vals.copy()
+    if window % 2 == 0:
+        window += 1
+    med = vals.rolling(window=window, center=True, min_periods=1).median()
+    return med.rolling(window=window, center=True, min_periods=1).mean()
+
+
+def build_optimizer_map(
+    binned: pd.DataFrame,
+    *,
+    origin: tuple[float, float],
+    heading: float,
+    min_runs: int,
+    smooth_window: int,
+    min_width_m: float,
+) -> pd.DataFrame:
+    """
+    Build an optimizer-ready map with smooth centerline + corridor bounds.
+
+    Best-practice choices:
+    - keep only stations observed by >= min_runs
+    - interpolate short gaps before smoothing
+    - smooth center + walls in track frame (s,d)
+    - enforce non-zero corridor width
+    - provide yaw + curvature for downstream optimizers
+    """
+    if binned.empty:
+        return pd.DataFrame()
+
+    d = binned.sort_values("s_m").copy()
+    if "n_runs" in d.columns:
+        d = d[d["n_runs"] >= int(min_runs)].copy()
+    if d.empty:
+        return pd.DataFrame()
+
+    d["d_mode_m"] = pd.to_numeric(d["d_mode_m"], errors="coerce").interpolate(limit_direction="both")
+    d["left_d_m"] = pd.to_numeric(d["left_d_m"], errors="coerce").interpolate(limit_direction="both")
+    d["right_d_m"] = pd.to_numeric(d["right_d_m"], errors="coerce").interpolate(limit_direction="both")
+
+    d["d_mode_sm"] = smooth_series(d["d_mode_m"], smooth_window)
+    d["left_d_sm"] = smooth_series(d["left_d_m"], smooth_window)
+    d["right_d_sm"] = smooth_series(d["right_d_m"], smooth_window)
+
+    # Ensure "left" is the larger lateral bound in track frame.
+    if np.nanmedian((d["left_d_sm"] - d["right_d_sm"]).to_numpy(float)) < 0:
+        t = d["left_d_sm"].copy()
+        d["left_d_sm"] = d["right_d_sm"]
+        d["right_d_sm"] = t
+
+    width = (d["left_d_sm"] - d["right_d_sm"]).to_numpy(float)
+    width = np.maximum(width, float(min_width_m))
+    center = d["d_mode_sm"].to_numpy(float)
+    half = 0.5 * width
+    left_d = center + half
+    right_d = center - half
+
+    s = d["s_m"].to_numpy(float)
+    x_c, y_c = from_track_sd(s, center, origin, heading)
+    lx, ly = from_track_sd(s, left_d, origin, heading)
+    rx, ry = from_track_sd(s, right_d, origin, heading)
+
+    dx_ds = np.gradient(x_c, s, edge_order=1)
+    dy_ds = np.gradient(y_c, s, edge_order=1)
+    yaw = np.unwrap(np.arctan2(dy_ds, dx_ds))
+    kappa = np.gradient(yaw, s, edge_order=1)
+
+    out = pd.DataFrame(
+        {
+            "s_m": s,
+            "x_m": x_c,
+            "y_m": y_c,
+            "yaw_rad": yaw,
+            "curvature_1pm": kappa,
+            "left_d_m": left_d,
+            "right_d_m": right_d,
+            "track_width_m": width,
+            "left_x_m": lx,
+            "left_y_m": ly,
+            "right_x_m": rx,
+            "right_y_m": ry,
+            "n_samples": d["n_samples"].to_numpy(int),
+            "n_runs": d["n_runs"].to_numpy(int),
+        }
+    )
+    return out
+
+
 def plot_map_frame(
     out_path: Path,
     points: pd.DataFrame,
@@ -208,6 +298,7 @@ def plot_map_frame(
     n_sd: float,
     origin: tuple[float, float],
     heading: float,
+    run_count: int,
 ) -> None:
     """Notebook-style X/Y wall scatter — all runs pooled (yaw-robust walls)."""
     fig, ax = plt.subplots(figsize=(12, 7))
@@ -226,7 +317,7 @@ def plot_map_frame(
     ax.legend()
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
-    ax.set_title(f"Straight track — 5 training runs merged (±{n_sd}σ lateral)")
+    ax.set_title(f"Straight track — {run_count} runs merged (±{n_sd}σ lateral)")
     fig.savefig(out_path, dpi=160, bbox_inches="tight")
     plt.close(fig)
 
@@ -236,6 +327,7 @@ def plot_track_unwrapped(
     points: pd.DataFrame,
     binned: pd.DataFrame,
     n_sd: float,
+    run_count: int,
 ) -> None:
     """Side view: along-track s vs lateral d (straight racetrack layout)."""
     fig, ax = plt.subplots(figsize=(14, 5))
@@ -252,7 +344,7 @@ def plot_track_unwrapped(
         ax.plot(binned["s_m"], binned["d_mode_m"], "k-", lw=2, label="merged center")
     ax.set_xlabel("s — along track [m] (0 = common start)")
     ax.set_ylabel("d — lateral [m]")
-    ax.set_title(f"Straight racetrack (unwrapped, yaw-robust walls) — ±{n_sd}σ")
+    ax.set_title(f"Straight racetrack (unwrapped, {run_count} runs) — ±{n_sd}σ")
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=8)
     fig.savefig(out_path, dpi=160, bbox_inches="tight")
@@ -266,6 +358,9 @@ def main() -> int:
     ap.add_argument("--n-sd", type=float, default=2.0)
     ap.add_argument("--s-bin-m", type=float, default=0.05, help="Along-track distance bin [m]")
     ap.add_argument("--common-origin", default="median")
+    ap.add_argument("--optimizer-min-runs", type=int, default=2, help="Keep bins seen by at least this many runs")
+    ap.add_argument("--optimizer-smooth-window", type=int, default=9, help="Centered smoothing window (odd preferred)")
+    ap.add_argument("--optimizer-min-width-m", type=float, default=0.35, help="Minimum corridor width for optimizer map")
     ap.add_argument("--plot-dir", type=Path, default=None)
     args = ap.parse_args()
 
@@ -292,19 +387,34 @@ def main() -> int:
         s_bin_m=args.s_bin_m,
         n_sd=args.n_sd,
     )
+    optimizer_map = build_optimizer_map(
+        binned,
+        origin=origin,
+        heading=heading,
+        min_runs=args.optimizer_min_runs,
+        smooth_window=args.optimizer_smooth_window,
+        min_width_m=args.optimizer_min_width_m,
+    )
 
     plot_dir = args.plot_dir or (args.data_dir / "_plots")
     plot_dir.mkdir(parents=True, exist_ok=True)
-    plot_map_frame(plot_dir / "straight_track_walls_xy.png", points, binned, args.n_sd, origin, heading)
-    plot_track_unwrapped(plot_dir / "straight_track_unwrapped_sd.png", points, binned, args.n_sd)
+    run_count = len(runs)
+    plot_map_frame(plot_dir / "straight_track_walls_xy.png", points, binned, args.n_sd, origin, heading, run_count)
+    plot_track_unwrapped(plot_dir / "straight_track_unwrapped_sd.png", points, binned, args.n_sd, run_count)
 
     points.to_csv(args.data_dir / "straight_track_points.csv", index=False)
     binned.to_csv(args.data_dir / "straight_track_map.csv", index=False)
+    optimizer_map.to_csv(args.data_dir / "straight_track_map_optimizer.csv", index=False)
 
     print(f"Runs: {len(runs)}  points: {len(points)}  bins: {len(binned)}  (s_bin_m={args.s_bin_m})")
     print(f"Origin: ({origin[0]:.3f}, {origin[1]:.3f})  heading: {math.degrees(heading):.1f}°")
     print(f"→ {plot_dir}/straight_track_walls_xy.png")
     print(f"→ {args.data_dir}/straight_track_map.csv")
+    print(
+        f"→ {args.data_dir}/straight_track_map_optimizer.csv"
+        f"  (min_runs={args.optimizer_min_runs}, smooth={args.optimizer_smooth_window},"
+        f" min_width={args.optimizer_min_width_m:.2f}m)"
+    )
     return 0
 
 

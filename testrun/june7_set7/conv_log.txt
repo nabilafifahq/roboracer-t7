@@ -1,0 +1,2 @@
+I0607 16:43:40.939087    38 pbstream_to_ros_map_main.cpp:44] Loading submap slices from serialized data.
+I0607 16:43:40.964114    38 pbstream_to_ros_map_main.cpp:52] Generating combined map image from submap slices.

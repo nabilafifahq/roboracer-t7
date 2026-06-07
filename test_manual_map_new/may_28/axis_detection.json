@@ -1,0 +1,14 @@
+{
+  "travel_axis": "y",
+  "wall_axis": "x",
+  "pca_travel_angle_deg": 129.0363664831355,
+  "variance_x": 0.5071345784645227,
+  "variance_y": 0.5946872189312741,
+  "variance_along_travel": 0.7627285567962989,
+  "variance_along_wall": 0.3390932405994978,
+  "rule": "travel = axis with larger PCA eigenvalue (along-track); wall = orthogonal",
+  "chosen_travel_axis": "y",
+  "chosen_wall_axis": "x",
+  "filter": "\u00b12.0 SD on x only (ghost walls)",
+  "per_bin": "mode(y), min(x)"
+}

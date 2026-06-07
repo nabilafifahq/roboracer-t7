@@ -1,0 +1,6 @@
+image: track_dedrift.pgm
+resolution: 0.050000
+origin: [-3.340074, -1.882925, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
