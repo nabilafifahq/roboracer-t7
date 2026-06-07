@@ -99,14 +99,16 @@ joy_teleop:
 print("  joy steering 0.40")
 PY
 
-echo "=== (6) LiDAR slice — laser origin ~11cm (TF z=0.11); floor ~9-18cm, below 20cm box step ==="
+echo "=== (6) LiDAR slice + RANGE (in CONFIG, not param-set: this node reads at startup) ==="
+# Validated: -0.08/-0.02 catches the wall band (box+hose at laser height), not floor.
+# range_max set HERE in the config (runtime `param set range_max` is IGNORED by this node).
 python3 - <<'PY'
 open("/race_ws/config/pointcloud_to_laserscan_indoor.yaml","w").write('''pointcloud_to_laserscan:
   ros__parameters:
     target_frame: laser
     transform_tolerance: 0.2
-    min_height: -0.02
-    max_height: 0.07
+    min_height: -0.08
+    max_height: -0.02
     angle_min: -3.14159
     angle_max: 3.14159
     angle_increment: 0.00872665
@@ -115,7 +117,7 @@ open("/race_ws/config/pointcloud_to_laserscan_indoor.yaml","w").write('''pointcl
     range_max: 2.5
     use_inf: true
 ''')
-print("  slice -0.02/0.07")
+print("  slice -0.08/-0.02, range 0.30-2.5 (in config -> applies at launch)")
 PY
 
 echo "=== (7) Cartographer anti-teleport overrides + odom prior = clean vesc /odom ==="
