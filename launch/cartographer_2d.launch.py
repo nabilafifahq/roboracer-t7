@@ -45,7 +45,7 @@ def generate_launch_description() -> LaunchDescription:
         remappings=[
             ("scan", "/scan"),
             # Fused odometry matches EKF odom->base_link TF (not raw VESC /odom).
-            ("odom", "/odometry/filtered"),
+            ("odom", "/odom"),  # vesc_to_odom (matches odom->base_link TF source)
             ("imu", "/livox/imu"),
         ],
         condition=UnlessCondition(has_state),
@@ -61,7 +61,7 @@ def generate_launch_description() -> LaunchDescription:
         arguments=common_args + ["-load_state_filename", load_state_filename],
         remappings=[
             ("scan", "/scan"),
-            ("odom", "/odometry/filtered"),
+            ("odom", "/odom"),  # vesc_to_odom (matches odom->base_link TF source)
             ("imu", "/livox/imu"),
         ],
         condition=IfCondition(has_state),

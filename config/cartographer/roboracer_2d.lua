@@ -65,17 +65,27 @@ TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 1
 -- need correct IMU-frame extrinsics and risks double-counting. Keep it off and
 -- let EKF odometry + scan matching drive local SLAM.
 TRAJECTORY_BUILDER_2D.use_imu_data = false
--- Correlative matcher adds robustness when odom is noisy (your hardware case).
-TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true
+-- Odom is CLEAN now (vesc_to_odom TF, steady at standstill). DISABLE the online
+-- correlative (brute-force grid) matcher: on a symmetric loop it snaps to the wrong
+-- spot -> 0.4-0.7 m teleports. Let ceres (gradient) refine the odom prior gently.
+TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = false
+-- Trust the odom prediction: high translation/rotation weights keep the pose near
+-- the extrapolated odom; the scan only nudges it (occupied_space_weight stays low).
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.occupied_space_weight = 1.0
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 30.0
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 60.0
 TRAJECTORY_BUILDER_2D.motion_filter.max_time_seconds = 5.0
 TRAJECTORY_BUILDER_2D.motion_filter.max_distance_meters = 0.05
 TRAJECTORY_BUILDER_2D.motion_filter.max_angle_radians = 0.12
 
 -- ---- Global SLAM / loop closure ------------------------------------------
-POSE_GRAPH.optimize_every_n_nodes = 35
+-- DISABLE pose-graph optimization for live driving: loop closure is what causes the
+-- big global snaps. On a tiny track with clean odom, local SLAM drift is negligible,
+-- and smooth map->base_link matters more than a globally-closed map for pursuit.
+POSE_GRAPH.optimize_every_n_nodes = 0
 POSE_GRAPH.constraint_builder.sampling_ratio = 0.3
-POSE_GRAPH.constraint_builder.min_score = 0.55
-POSE_GRAPH.constraint_builder.global_localization_min_score = 0.60
+POSE_GRAPH.constraint_builder.min_score = 0.65
+POSE_GRAPH.constraint_builder.global_localization_min_score = 0.70
 POSE_GRAPH.constraint_builder.loop_closure_translation_weight = 1.1e4
 POSE_GRAPH.constraint_builder.loop_closure_rotation_weight = 1.0e5
 POSE_GRAPH.optimization_problem.huber_scale = 1.0e2
