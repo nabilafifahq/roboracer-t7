@@ -52,7 +52,7 @@ Car: 2–3 laps + rosbag          →  Laptop: offline de-drift
 
 Full steps: [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Parts A and B.
 
-**Compare your result to:** `testrun/june7_set6/set6_FINAL_berlin.png`
+**Compare your result to:** `testrun/june7_set7/FINAL_berlin_dedrift.png`
 
 ---
 
