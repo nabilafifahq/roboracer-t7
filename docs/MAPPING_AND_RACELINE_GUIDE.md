@@ -2,7 +2,7 @@
 
 **Goal:** Record the track on the car, build a clean map + optimal racing line on your laptop.
 
-**Reference result:** `testrun/june7_set6/set6_FINAL_berlin.png` (same layout as your `FINAL_track_map.png` output) if you choose to follow [map layout](#what-you-are-building-if-following-as-reference)
+**Reference result:** `testrun/june7_set7/FINAL_berlin_dedrift.png` (same layout as your `FINAL_track_map.png` output) if you choose to follow [map layout](#what-you-are-building-if-following-as-reference)
 
 ---
 
@@ -304,8 +304,14 @@ Open `FINAL_track_map.png`. Good result:
 - Rectangular inner box — sharp corners
 - Raceline looping around the box
 
-Compare to reference: `testrun/june7_set6/set6_FINAL_berlin.png` (June 7 best run).
+Reference data (June 7, best run)
 
+| Path | Contents |
+|------|----------|
+| `testrun/june7_set7/lap3x/` | Source rosbag |
+| `testrun/june7_set7/maps_4x/` / `track_dedrift.pgm` | De-drifted map |
+| `testrun/june7_set7/traj_race_cl.csv` | Raceline to load on car |
+| `testrun/june7_set7/FINAL_berlin_dedrift.png` | Reference figure |
 ---
 
 ## Part C — Drive the raceline on the car (**YOUR MAIN TASK**)
