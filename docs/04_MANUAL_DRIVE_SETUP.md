@@ -3,9 +3,6 @@
 Use this to confirm the RC controller works **before** mapping or autonomy.
 
 **Run on:** Container (`root@UCSD-Blue:/race_ws#`).
-
-**After this passes:** go to [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) for the main track-mapping workflow (uses a different launch command — that is intentional).
-
 ---
 
 ## Terminals for this test
