@@ -309,7 +309,7 @@ Reference data (June 7, best run)
 | Path | Contents |
 |------|----------|
 | `testrun/june7_set7/lap3x/` | Source rosbag |
-| `testrun/june7_set7/maps_4x/` / `track_dedrift.pgm` | De-drifted map |
+| `testrun/june7_set7/track_dedrift.pgm` | De-drifted map |
 | `testrun/june7_set7/traj_race_cl.csv` | Raceline to load on car |
 | `testrun/june7_set7/FINAL_berlin_dedrift.png` | Reference figure |
 ---
