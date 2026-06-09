@@ -33,7 +33,7 @@ ros2 run reactive_control raceline_pure_pursuit_node --ros-args \
   -p wheelbase_m:=0.33
 ```
 
-**Deadman:** Squeeze = stop (RC override). **Release** deadman to let autonomy drive.
+**Deadman:** Turn on = stop (RC override). Turn off deadman to let autonomy drive.
 
 Full terminal layout: [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Part C.
 
@@ -63,7 +63,7 @@ Aliases: `autonomy:=csv_path`
 
 ---
 
-## Nav2 vector pursuit (advanced — not team-validated yet)
+## Nav2 vector pursuit (advanced — not validated yet)
 
 Full Derek stack: CSV → `/global_path` → Nav2 → `/nav2_cmd_ackermann` → mux.
 
@@ -101,7 +101,7 @@ Team 7's validated offline pipeline outputs **`map`-frame** geometry. Always use
 
 | `autonomy` | Purpose | Drives car? |
 |------------|---------|-------------|
-| `wall_follow` (default) | LiDAR corridor follow | Yes → `/drive` |
+| `wall_follow` (default) | LiDAR corridor follow | Yes → `/drive` (need /pointcloud_to_laserscan param configuration adjustment) |
 | `none` | Manual RC only + sensors | No (RC only) |
 | `raceline_path` | Publish `/global_path` | **No** |
 | `raceline` | Nav2 follow | Yes → `/nav2_cmd_ackermann` |
