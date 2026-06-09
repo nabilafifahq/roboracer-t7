@@ -1,4 +1,4 @@
-# Handoff Status — where Team 7 left off
+# Handoff Status
 
 **Last updated:** June 2026  
 **Branch with clean docs:** `docs/clean-handoff`  
@@ -8,9 +8,9 @@ Read this first, then [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) (includes a **photo
 
 ---
 
-## Summary (one paragraph)
+## Summary
 
-We can **record a short drive on the car**, **build a clean readable map and racing line on a laptop** (offline de-drift + TUM optimizer), and produce a **final track figure** with measured walls and an optimal path. We have **not yet successfully run that raceline on the car in pursuit mode** — that is the main task for the next team.
+We can **record several short drives on the car**, **build a clean readable map and racing line on a laptop** (TUM optimizer), and produce a **final track figure** with measured walls and an optimal path. We have **not yet successfully run that raceline on the car in pursuit mode** — that is the next main task for the next team.
 
 ---
 
@@ -43,8 +43,8 @@ We can **record a short drive on the car**, **build a clean readable map and rac
 ## Pipeline that produces the map (reproduce this first)
 
 ```
-Car: 2–3 laps + rosbag          →  Laptop: offline de-drift
-                                 →  Laptop: build_raceline_from_bag.py
+Car: 2–3 laps + rosbag          →  Laptop: offline de-drift 
+                                 →  Laptop: build_raceline_from_bag.py (visualization only)
                                  →  Output: FINAL_track_map.png + traj_race_cl.csv
 ```
 
@@ -52,7 +52,7 @@ Car: 2–3 laps + rosbag          →  Laptop: offline de-drift
 
 Full steps: [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Parts A and B.
 
-**Compare your result to:** `testrun/june7_set7/FINAL_berlin_dedrift.png`
+**Compare your result to:** `testrun/june7_set6/set6_FINAL_berlin.png`
 
 ---
 
