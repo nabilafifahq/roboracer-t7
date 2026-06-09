@@ -15,7 +15,8 @@ UCSD Winter 2026 Team 7 — F1TENTH indoor RoboRacer (1/10 scale).
 | 3 | [docs/PHYSICAL_SETUP.md](docs/PHYSICAL_SETUP.md) | Car, track, Wi-Fi, layout |
 | 4 | [docs/MAPPING_AND_RACELINE_GUIDE.md](docs/MAPPING_AND_RACELINE_GUIDE.md) | Map pipeline + pursuit steps |
 
-**Pick-up task:** We can build a readable map and raceline on the laptop. **Implementing pursuit on the car is not done yet.**
+**Current States**: See [Progress Update](https://docs.google.com/presentation/d/1Z3oOzJPs9dkZyqz4G1NnzSDlAGju_gPKxS-lMDGGmN4/edit?usp=sharing)
+**Pick-up task:** Run raceline with Pure Pursuit algorithm in map frame (implemented but not tested).
 
 ---
 
