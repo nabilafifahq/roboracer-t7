@@ -2,7 +2,7 @@
 
 **Goal:** Record the track on the car, build a clean map + optimal racing line on your laptop.
 
-**Reference result:** `testrun/june7_set6/set6_FINAL_berlin.png` (same layout as your `FINAL_track_map.png` output) if you choose to follow [map layout](##What-you-are-building)
+**Reference result:** `testrun/june7_set6/set6_FINAL_berlin.png` (same layout as your `FINAL_track_map.png` output) if you choose to follow [map layout](##What-you-are-building-(if-following-as-reference))
 
 ---
 
