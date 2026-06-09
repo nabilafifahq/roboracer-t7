@@ -6,16 +6,6 @@
 
 ---
 
-## Who should read this?
-
-| You are… | Read first |
-|----------|------------|
-| **Brand new to this repo** | [00_START_HERE.md](00_START_HERE.md) → setup docs **01 through 04** → then come back here |
-| **Car already works, RC tested** | Start at [Part A](#part-a--record-on-the-car) below |
-| **Something broke** | [07_TROUBLESHOOTING.md](07_TROUBLESHOOTING.md) |
-
----
-
 ## Glossary
 
 | Term | Plain meaning |
