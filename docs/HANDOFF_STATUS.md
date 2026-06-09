@@ -44,7 +44,7 @@ We can **record several short drives on the car**, **build a clean readable map 
 
 ```
 Car: 2–3 laps + rosbag          →  Laptop: offline de-drift 
-                                 →  Laptop: build_raceline_from_bag.py (visualization only)
+                                 →  Laptop: build_raceline_from_bag.py
                                  →  Output: FINAL_track_map.png + traj_race_cl.csv
 ```
 
