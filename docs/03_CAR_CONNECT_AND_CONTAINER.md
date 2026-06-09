@@ -3,7 +3,6 @@
 Connect to the car and enter the runtime container.
 
 **Before first session:** read [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) (Wi-Fi, power-on, track).  
-**After this works:** [04_MANUAL_DRIVE_SETUP.md](04_MANUAL_DRIVE_SETUP.md) → [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md).
 
 ---
 
