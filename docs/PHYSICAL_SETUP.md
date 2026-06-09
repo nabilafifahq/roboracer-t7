@@ -88,15 +88,14 @@ Older layout sketches: `test_manual_map_new/cart_logs/ucsd_mock_racetrack_june3.
 Closed loop — **“O with a box inside”**:
 
 ```
-     [hall wall + handrail]
-              │
-    ┌─────────┴─────────┐
-    │  ┌── inner boxes ──┐│
-    │  │   (stacked)    ││
-    │  └────────────────┘│
-    │    ↑ drive here    │
-    └─ black pipe / bin ─┘
-         blue tape = start
+  ┌─────────────────────────────────────┐
+  │  outer hose wall (measured)         │
+  │    ┌───────────────┐                │
+  │    │  inner box    │  ← ~1.25×0.40 m│
+  │    │  (measured)   │                │
+  │    └───────────────┘                │
+  │         ── racing line ──>          │
+  └─────────────────────────────────────┘
 ```
 
 | Element | Description |
@@ -113,10 +112,6 @@ Closed loop — **“O with a box inside”**:
 2. Re-record a **2–3 lap bag** on the car.
 3. Re-run **offline de-drift** on the laptop.
 4. Generate a new `traj_race_cl.csv` — old racelines will not match a new shape.
-
-### Why this layout matters
-
-Mapping quality depends on **walls on both sides** of the car at all times. The inner boxes + outer pipe give LiDAR returns left and right. Open sides (missing pipe, big gaps) produce bad maps and unusable racelines.
 
 ---
 
@@ -146,7 +141,9 @@ Applied on the car by `scripts/car_map_setup.sh` each container session.
 
 ### Known mechanical issue
 
-Car **pulls slightly right** on straight lines. Counter-steering while mapping adds noise to odometry. Fix servo trim on the bench when possible.
+Car **pulls slightly right** on straight lines. Counter-steering while mapping adds noise to odometry. This is not a software, but a hardware issue. Ask TA to loosen the screws of the front wheels to resolve the counter-steering. 
+
+RC Connection drops occasionally due to loosely secured the wires. Ask TA to proplery secure all connections.
 
 ---
 
@@ -168,23 +165,13 @@ sudo ln -sf /dev/ttyACM0 /dev/sensors/vesc
 
 ---
 
-## 8) Where to run the car
-
-- **Covered corridor / breezeway** near UCSD HDSI (see photo in §4 — exact spot may change; confirm with professor).
-- Smooth gray floor, walls on at least two sides.
-- Clear bins, cables, and foot traffic before driving.
-- First test of a session: **wheels up on a box** or **slow manual lap** before autonomy.
-
----
-
-## 9) Session checklist (physical)
+## 8) Session checklist (physical)
 
 - [ ] RC on, then car power on
 - [ ] Laptop on `ucsd_robocar`
 - [ ] SSH works
 - [ ] Track built: inner stacked boxes + outer pipe/walls, closed loop (see §4 photo)
 - [ ] Blue tape start line visible
-- [ ] Battery charged
-- [ ] Corridor clear
+- [ ] Battery charged (under LiPo, 4.2V, 4S Cells, and 4.0A)
 
 Then proceed to [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Part A.
