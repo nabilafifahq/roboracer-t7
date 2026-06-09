@@ -4,14 +4,17 @@
 
 ---
 
-## What is this project?
+## What is the project?
 
-A small indoor race car (F1TENTH scale) that:
+A small indoor race car that we:
 
-1. You drive with an RC controller (with a safety deadman switch).
-2. A LiDAR sensor maps the track while you drive.
-3. Software builds a **track map + optimal racing line** from that recording.
-4. The car should follow that line autonomously — **that last step is your main task**.
+1. Drive with an RC controller (with a safety deadman switch).
+2. Use A LiDAR sensor to map the track while we drive.
+3. Builds a **track map + optimal raceline** from those recordings.
+4. Drive autonousmly following optimal raceline in map frame
+5. Account for live object movement and detect visual racetrack cues
+6. Install further safety mechanisms at turns
+7. Race in the official Roboracer racetrack
 
 **Team:** UCSD DSC 190 Winter 2026, Team 7.
 
