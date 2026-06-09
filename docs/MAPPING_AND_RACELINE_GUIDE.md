@@ -2,9 +2,7 @@
 
 **Goal:** Record the track on the car, build a clean map + optimal racing line on your laptop.
 
-**Status:** Parts A–B are **done and validated**. Part C (drive the line on the car) is **your pick-up task** — see [HANDOFF_STATUS.md](HANDOFF_STATUS.md).
-
-**Reference result:** `testrun/june7_set7/FINAL_berlin_dedrift.png` (same layout as your `FINAL_track_map.png` output).
+**Reference result:** `testrun/june7_set6/set6_FINAL_berlin.png` (same layout as your `FINAL_track_map.png` output).
 
 ---
 
@@ -18,11 +16,11 @@
 
 ---
 
-## Glossary (read once)
+## Glossary
 
 | Term | Plain meaning |
 |------|----------------|
-| **Laptop** | Your Mac/PC where you edit code |
+| **Laptop** | Your Laptop/PC where you edit code |
 | **Car host (Pi)** | Raspberry Pi on the car. Prompt looks like: `ucsd-blue@UCSD-Blue:~$` |
 | **Container** | Software environment inside Docker on the Pi. Prompt looks like: `root@UCSD-Blue:/race_ws#` |
 | **SSH** | Remote login: `ssh ucsd-blue@ucsd-blue.local` opens a shell on the car |
@@ -30,7 +28,7 @@
 | **Bag** | A recording file (like a video of sensor data) saved while you drive |
 | **SLAM / Cartographer** | Software that builds a map from LiDAR while the car moves |
 | **De-drift (offline)** | Re-process the bag on a laptop with loop closure — fixes map smear from Pi CPU load |
-| **`/scan`** | LiDAR data as a 2D laser ring (~10 messages per second = 10 Hz) |
+| **`/scan`** | LiDAR data as a 2D laser ring (~10 messages per second) |
 | **Deadman (RC button 1)** | Safety switch on the remote — see [Safety](#safety-deadman-switch) below |
 | **TUM optimizer** | Offline tool that computes a fast racing line from track width data |
 
@@ -74,8 +72,8 @@ The RC controller has a **deadman button** (index `1` on `/joy`).
 
 | Phase | What to do |
 |-------|------------|
-| **Manual driving / mapping** | Hold deadman **ON** to drive. Release = no motor commands. |
-| **Autonomous driving (Part C)** | **Release** deadman to allow `/drive`. **Squeeze/hold deadman = stop** (RC overrides autonomy). |
+| **Manual driving / mapping** | Turn deadman **ON** to drive. |
+| **Autonomous driving (Part C)** | Turn deadman **OFF** to allow `/drive`. **Press deadman = stop** (RC overrides autonomy). |
 
 ---
 
@@ -102,6 +100,8 @@ You need **3 terminal tabs on your laptop**. Each tab SSHs into the car. Prompt 
 
 ### Step A1 — Tab 1: SSH, pull repo, start container
 
+Sequence: RC transmitter **ON** → car power **ON** → wait ~30 s → SSH.
+
 On **Tab 1** (laptop):
 
 ```bash
@@ -114,8 +114,6 @@ docker pull "$IMAGE"
 ```
 
 **Expected:** Prompt changes to `root@UCSD-Blue:/race_ws#` — you are now **inside the container**.
-
-Power-on order (every time): RC transmitter **ON** → car power **ON** → wait ~30 s → SSH.
 
 ---
 
@@ -208,14 +206,14 @@ When finished:
 
 ### Step A6 — Copy bag to laptop
 
-On **Tab 2** (or new SSH to Pi host — prompt `ucsd-blue@...`, **not** container):
+On **Tab 2** (`exit` to return to Pi Host):
 
 ```bash
 ssh ucsd-blue@ucsd-blue.local
 docker cp roboracer_t7:/race_ws/logs/lap_bag ~/lap_bag
 ```
 
-On **your laptop** (local terminal, not SSH):
+On **your laptop** (`exit` to return to local terminal, not SSH):
 
 ```bash
 mkdir -p ~/Documents/roboracer-t7/testrun/my_run
@@ -306,7 +304,7 @@ Open `FINAL_track_map.png`. Good result:
 - Rectangular inner box — sharp corners
 - Raceline looping around the box
 
-Compare to reference: `testrun/june7_set7/FINAL_berlin_dedrift.png` (June 7 best run).
+Compare to reference: `testrun/june7_set6/set6_FINAL_berlin.png` (June 7 best run).
 
 ---
 
