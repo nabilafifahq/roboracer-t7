@@ -72,18 +72,6 @@ After completing step A and B, follow Part C: [MAPPING_AND_RACELINE_GUIDE.md](MA
 
 ---
 
-## Doc reading order for new team
-
-1. [00_START_HERE.md](00_START_HERE.md)
-2. [HANDOFF_STATUS.md](HANDOFF_STATUS.md) ← this file
-3. [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md)
-4. Docs 01 → 04 (setup + RC test)
-5. [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md) Parts A–B (reproduce map)
-6. **Part C + milestone above** (pursuit — your work)
-7. [06_VALIDATION_CHECKLIST.md](06_VALIDATION_CHECKLIST.md)
-
----
-
 ## Contact / context
 
 - **Course:** UCSD DSC 190, Winter 2026, Team 7 (HDSI)
