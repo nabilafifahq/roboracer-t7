@@ -394,14 +394,14 @@ ros2 run reactive_control raceline_pure_pursuit_node --ros-args \
 
 | Action | Effect |
 |--------|--------|
-| **Squeeze / hold deadman** | RC override — **car stops** |
-| **Release deadman** | Autonomy on `/drive` — **car may move** |
+| **Turn deadman on** | RC override — **car stops** |
+| **Turn deadman off** | Autonomy on `/drive` — **car may move** |
 
 Test with wheels up or car blocked first. Target speed ~0.08 m/s.
 
 ### Optional — visualize path in RViz (does not drive)
 
-In a fourth shell, you can publish `/global_path` without affecting motors:
+In a fourth shell/tab, you can publish `/global_path` without affecting motors:
 
 ```bash
 ros2 launch /race_ws/bringup.launch.py \
