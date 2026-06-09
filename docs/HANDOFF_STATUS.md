@@ -4,7 +4,7 @@
 **Branch with clean docs:** `docs/clean-handoff`  
 **Docker image:** `nabilafifahq/roboracer-t7:cartographer-ekf`
 
-Read this first, then [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) (includes a **photo of the current track** — layout can change) and [MAPPING_AND_RACELINE_GUIDE.md](MAPPING_AND_RACELINE_GUIDE.md).
+Read this first, then [PHYSICAL_SETUP.md](PHYSICAL_SETUP.md) (includes a **photo of the current track** — layout can change).
 
 ---
 
