@@ -62,30 +62,6 @@ After completing step A and B, follow Part C: [MAPPING_AND_RACELINE_GUIDE.md](MA
 
 ---
 
-## Key files for pursuit work
-
-| File | Role |
-|------|------|
-| `traj_race_cl.csv` | Optimized raceline (from Part B or `testrun/june7_set7/`) |
-| `wall_follow_script/reactive_control/raceline_pure_pursuit_node.py` | Geometric pursuit node |
-| `bringup.launch.py` | Launch args: `autonomy:=raceline_path`, `pursuit_world_frame:=map` |
-| `config/ackermann_mux_topics.yaml` | RC priority 100 > autonomy `/drive` 10 |
-
----
-
-## Reference data (June 7, best run)
-
-| Path | Contents |
-|------|----------|
-| `testrun/june7_set7/lap3x/` | Source rosbag |
-| `testrun/june7_set7/maps/` / `track_dedrift.pgm` | De-drifted map |
-| `testrun/june7_set7/traj_race_cl.csv` | Raceline to load on car |
-| `testrun/june7_set7/FINAL_berlin_dedrift.png` | Reference figure |
-
-You can copy `traj_race_cl.csv` from this folder for first pursuit tests without re-mapping.
-
----
-
 ## Known lessons (don't repeat our mistakes)
 
 1. **Short bag on car, heavy SLAM on laptop** — not the reverse.
