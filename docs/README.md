@@ -20,6 +20,12 @@ Core runbooks:
 - `10_EXTERNAL_CREDITS.md`
 - `11_SAFETY_FAILSAFE_AND_COMPETITION_RULES.md`
 
+Team 7 (WI26) handoff:
+
+- `general_and_debugging_info.md` — **start-to-end handoff**: hardware, software, frames, every node, the full
+  map→racing-line→autonomous workflow, every error with the real message + fix, and the debugging-visualizer
+  combo (`../scripts/visualizers/`).
+
 Architecture and references:
 
 - `MANUAL_AUTONOMY_NODE_TOPIC_FLOW.md`

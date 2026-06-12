@@ -98,8 +98,8 @@ pointcloud_to_laserscan:
   ros__parameters:
     target_frame: laser
     transform_tolerance: 0.2
-    min_height: -0.08          # ~7 cm above floor
-    max_height: 0.00           # ~15 cm floor — BELOW the 20 cm box step
+    min_height: 0.0          # ~7 cm above floor
+    max_height: 0.1           # ~15 cm floor — BELOW the 20 cm box step
     angle_min: -3.14159
     angle_max: 3.14159
     angle_increment: 0.00872665
